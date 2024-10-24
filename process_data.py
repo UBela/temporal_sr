@@ -8,6 +8,8 @@ import os
 from PIL import Image   
 import json
 import yaml
+from box import Box
+import argparse
 
 #TODO put these in a config file
 SCALE=2
@@ -20,11 +22,21 @@ TRAIN_START = '2020-01-01'
 TRAIN_END = '2021-01-01'
 TEST_START = '2021-01-01'
 TEST_END = '2022-01-01'
-BATCH_SIZE = 32
-NUM_WORKERS = 2
-IS_SHUFFLED = True
 
-# wrapper function to load dataset
+
+def load_config(config_path):
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
+
+parser = argparse.ArgumentParser(description='Run model training with config')
+parser.add_argument('config_path', type=str, help='Path to the config file')
+
+args = parser.parse_args()
+config = Box(load_config(args.config_path)['TrainingConfig'])
+
+
+
 def load_dataset(data, start, end, patch_size):
     dataset = xr.open_dataset(data).sel(valid_time=slice(start, end)).isel(longitude=slice(0, patch_size), latitude=slice(0, patch_size))
     return dataset
@@ -42,14 +54,25 @@ def normalize_data(data):
         
         return data, scale
          
-def get_means_stds(dataset):
-    means = []
-    stds = []
-    for var in dataset:
-        means.append(dataset[var].values.mean())
-        stds.append(dataset[var].values.std())
-    return means, stds
+def get_means_stds(dataset, config_path):
+    means = {}
+    stds = {}
 
+    for var in dataset:
+        means[var] = float(dataset[var].values.mean())  
+        stds[var] = float(dataset[var].values.std())    
+
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+        if config is None:
+            config = {}  
+    config['means'] = means
+    config['stds'] = stds
+
+    with open(config_path, 'w') as file:
+        yaml.dump(config, file)
+
+    return means, stds
 
 def average_pooling(data, scale, to_int = False):
     new_h, new_w = data.shape[0]//scale, data.shape[1]//scale
@@ -64,7 +87,9 @@ def create_hr_images(dataset, hr_dir):
             os.makedirs(hr_dir)
 
         for var in dataset:
-            os.makedirs(f'{hr_dir}/{var}')
+            dir = f'{hr_dir}/{var}'
+            if not os.path.exists(dir):
+                os.makedirs(dir)
             for i in range(len(dataset[var])):
                 patch = dataset[var][:, :32, :32].values
                 
@@ -76,11 +101,14 @@ def create_hr_images(dataset, hr_dir):
         print('HR images done')
 
 def create_lr_images(dataset, lr_dir, scale=SCALE):
+    
     if not os.path.exists(lr_dir):
         os.makedirs(lr_dir)
 
     for var in dataset:
-        os.makedirs(f'{lr_dir}/{dataset[var]}')
+        dir = f'{lr_dir}/{var}'
+        if not os.path.exists(dir):
+            os.makedirs(dir)
         for i in range(len(dataset[var])):
             patch = dataset[var][:, :32, :32].values
             
@@ -93,13 +121,12 @@ def create_lr_images(dataset, lr_dir, scale=SCALE):
    
 class SuperresDataset(Dataset):
     
-    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST):
+    def __init__(self, dataset, means, stds, scaling_factor=SCALE, features=FEATURE_LIST):
         super().__init__()
         self.hr_data = dataset
         self.scale = scaling_factor
-        self.means, self.stds = get_means_stds(self.hr_data)
-        
         self.features = features
+        self.means, self.stds = [means[var] for var in features], [stds[var] for var in features]
         self.transform = transforms.Compose([
             transforms.Normalize(mean=self.means, std=self.stds)
         ])
@@ -111,6 +138,7 @@ class SuperresDataset(Dataset):
         lr_patches = []
        
         for var in self.features:
+            print(var)
             hr_patch = self.hr_data[var][index, :, :].values
             lr_patch = average_pooling(hr_patch, self.scale)
            
@@ -125,29 +153,29 @@ class SuperresDataset(Dataset):
         hr_patches = self.transform(hr_patches)
         lr_patches = self.transform(lr_patches)
 
-        return hr_patches, lr_patches
+        return lr_patches, hr_patches
     
-def initialize_dataloader():
+def initialize_dataset(config):
   
     data = load_dataset(DATA_PATH, START_DATE, END_DATE, PATCH_SIZE)
-   
+    means, stds = get_means_stds(data, 'config.yaml')
     #data, scale = normalize_data(data)
     
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
     train_data
    
-    train_dataset = SuperresDataset(train_data)
-    test_dataset = SuperresDataset(test_data)
+    train_dataset = SuperresDataset(train_data, means, stds)
+    test_dataset = SuperresDataset(test_data, means, stds)
     
-
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=IS_SHUFFLED)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=IS_SHUFFLED)
-    return train_dataset, test_dataset, train_loader, test_loader
+    return train_dataset, test_dataset
 
 if __name__ == '__main__':
     
-    train_set, test_set, train_dataloader, test_dataloader = initialize_dataloader()
+    train_set, test_set = initialize_dataset(config)
 
     hr, lr = train_set[0]
     print(hr.shape, lr.shape)
+
+
+#TODO get mean and var after avg pooling, write into yaml
