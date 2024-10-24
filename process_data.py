@@ -41,10 +41,7 @@ def normalize_data(data):
         data[var] = 2 * data[var] - 1
         
         return data, scale
-        
-        
-        
-# get means for each variable for torch.transforms.Normalize
+         
 def get_means_stds(dataset):
     means = []
     stds = []
@@ -53,7 +50,7 @@ def get_means_stds(dataset):
         stds.append(dataset[var].values.std())
     return means, stds
 
-# Low resolution images, apply average pooling of scaleXscale
+
 def average_pooling(data, scale, to_int = False):
     new_h, new_w = data.shape[0]//scale, data.shape[1]//scale
     data = data.reshape(new_h,scale ,new_w,scale).mean(axis=(1, 3))
@@ -133,7 +130,7 @@ class SuperresDataset(Dataset):
 def initialize_dataloader():
   
     data = load_dataset(DATA_PATH, START_DATE, END_DATE, PATCH_SIZE)
-    # QUESTION NORMAILZE BOTH TRAIN AND TEST DATA WIITH SAME SCALE?
+   
     #data, scale = normalize_data(data)
     
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
@@ -151,8 +148,6 @@ def initialize_dataloader():
 if __name__ == '__main__':
     
     train_set, test_set, train_dataloader, test_dataloader = initialize_dataloader()
-
-    #get a random input tuple and turn all tensors inside into images and plot them
 
     hr, lr = train_set[0]
     print(hr.shape, lr.shape)
