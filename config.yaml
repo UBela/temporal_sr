@@ -1,0 +1,38 @@
+TrainingConfig:
+  patch_size: 32
+  train_batch_size: 16
+  eval_batch_size: 1
+  num_epochs: 100
+  num_workers: 4
+  learning_rate: 0.0001
+
+
+  data_path: "data/data_stream-oper.nc"
+  train_start_date: "2020-01-01"
+  train_end_date: "2022-12-31"
+  test_start_date: "2023-01-01"
+  test_end_date: "2023-12-31"
+  
+  scaling_factor: 2
+  in_channels: 6
+  out_channels: 6
+  feature_channels: 64
+
+  model_path: "model"
+
+
+
+means:
+  d2m: 279.0875244140625
+  msl: 101628.9921875
+  t2m: 283.34393310546875
+  tp: 0.00010196938819717616
+  u10: 1.130829095840454
+  v10: 0.652614176273346
+stds:
+  d2m: 6.190201282501221
+  msl: 968.9214477539062
+  t2m: 7.458954811096191
+  tp: 0.0003048087237402797
+  u10: 3.239439010620117
+  v10: 2.6921465396881104
