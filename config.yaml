@@ -5,7 +5,12 @@ TrainingConfig:
   num_epochs: 100
   num_workers: 4
   learning_rate: 0.0001
+  n_gpu: 1
+  pin_memory: True
+  gamma: 0.7
 
+  feature_list: ['u10', 'v10', 'd2m', 't2m', 'msl', 'tp']
+  
 
   data_path: "data/data_stream-oper.nc"
   train_start_date: "2020-01-01"
@@ -19,7 +24,9 @@ TrainingConfig:
   feature_channels: 64
 
   model_path: "model"
-
+  output_dir: "output"
+  preds_dir: "preds"
+  config_path: "config.yaml"
 
 
 means:
