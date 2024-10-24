@@ -20,6 +20,7 @@ class EDSRModel(EdsrModel):
                 if isinstance(m, nn.Conv2d) and m.in_channels == 64 and m.out_channels == 64:
                     m.in_channels = feature_channels
                     m.out_channels = feature_channels
+                    # he initialization
                     m.weight = nn.Parameter(nn.init.kaiming_uniform_(torch.empty(feature_channels, feature_channels, m.kernel_size[0], m.kernel_size[1])))
                     m.bias = nn.Parameter(torch.zeros(feature_channels))
                     
