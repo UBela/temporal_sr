@@ -28,7 +28,7 @@ class EDSRModel(EdsrModel):
 
             self.tail = self._flexible_upscaler(in_channels, feature_channels, out_channels, scaling_factor)
             
-        def _flexible_upscaler(self, in_channels, feature_channels, out_channels, scaling_factor):
+        def _flexible_upscaler(self, in_channels, feature_channels, scaling_factor):
             layers = []
             num_channels = int(4 * feature_channels)
             
