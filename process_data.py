@@ -138,7 +138,7 @@ class SuperresDataset(Dataset):
         lr_patches = []
        
         for var in self.features:
-            print(var)
+            #print(var)
             hr_patch = self.hr_data[var][index, :, :].values
             lr_patch = average_pooling(hr_patch, self.scale)
            
