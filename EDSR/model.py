@@ -1,16 +1,16 @@
 from super_image import EdsrModel, EdsrConfig
 import torch
 import torch.nn as nn
-
+#TODO make model input and output variable
 class EDSRModel(EdsrModel):
-    def __init__(self, in_channels,feature_channels, scaling_factor):
+    def __init__(self, in_channels, out_channels, feature_channels, scaling_factor):
         
         config = EdsrConfig(scale=scaling_factor)
         self.scaling_factor = scaling_factor
-        
+        self.out_channels = out_channels
         super(EDSRModel, self).__init__(config)
         
-        self._modify_architecture(in_channels, feature_channels)
+        self._modify_architecture(in_channels,feature_channels)
         
     def _modify_architecture(self, in_channels, feature_channels):
         
@@ -27,9 +27,9 @@ class EDSRModel(EdsrModel):
                 
         self.head = nn.Conv2d(in_channels, feature_channels, kernel_size=(3,3), stride=(1,1), padding=(1,1))
 
-        self.tail = self._flexible_upscaler(in_channels, feature_channels, self.scaling_factor)
+        self.tail = self._flexible_upscaler(self.out_channels, feature_channels, self.scaling_factor)
         
-    def _flexible_upscaler(self, in_channels, feature_channels, scaling_factor):
+    def _flexible_upscaler(self, out_channels, feature_channels, scaling_factor):
         layers = []
         num_channels = int(4 * feature_channels)
         
@@ -42,7 +42,7 @@ class EDSRModel(EdsrModel):
                 nn.PixelShuffle(upscale_factor = 2)
             ])
             
-        layers.append(nn.Conv2d(feature_channels, in_channels, kernel_size=(3,3), stride=(1,1), padding=(1,1)))
+        layers.append(nn.Conv2d(feature_channels, out_channels, kernel_size=(3,3), stride=(1,1), padding=(1,1)))
         
         return nn.Sequential(*layers)
                         
