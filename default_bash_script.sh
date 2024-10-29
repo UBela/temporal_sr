@@ -1,22 +1,25 @@
 #!/bin/bash
-#SBATCH -J changeme                # Job name
+#SBATCH -J EDSR_training                # Job name
 #SBATCH --ntasks=1                 # Number of tasks
-#SBATCH --cpus-per-task=8          # Number of CPU cores per task
+#SBATCH --cpus-per-task=1          # Number of CPU cores per task
 #SBATCH --nodes=1                  # Ensure that all cores are on the same machine with nodes=1
 #SBATCH --partition=2080-galvani   # Which partition will run your job
-#SBATCH --time=0-00:05             # Allowed runtime in D-HH:MM
-#SBATCH --gres=gpu:2               # (optional) Requesting type and number of GPUs
+#SBATCH --partition=slurm-v100-1  # Which partition will run your job
+#SBATCH --time=0-00:45             # Allowed runtime in D-HH:MM
+#SBATCH --gres=gpu:1               # (optional) Requesting type and number of GPUs
 #SBATCH --mem=50G                  # Total memory pool for all cores (see also --mem-per-cpu); exceeding this number will cause your job to fail.
-#SBATCH --output=/CHANGE/THIS/PATH/TO/WORK/myjob-%j.out       # File to which STDOUT will be written - make sure this is not on $HOME
-#SBATCH --error=/CHANGE/THIS/PATH/TO/WORK/myjob-%j.err        # File to which STDERR will be written - make sure this is not on $HOME
-#SBATCH --mail-type=ALL            # Type of email notification- BEGIN,END,FAIL,ALL
+#SBATCH --output=EDSR/logs/job-%j.out       # File to which STDOUT will be written - make sure this is not on $HOME
+#SBATCH --error=EDSR/logs/myjob-%j.err        # File to which STDERR will be written - make sure this is not on $HOME
+#SBATCH --mail-type=FAIL            # Type of email notification- BEGIN,END,FAIL,ALL
 #SBATCH --mail-user=bela.umlauf@student.uni-tuebingen.de   # Email to which notifications will be sent
 
-conda activate myenv
+conda activate thesis
 
 # Run our code
 echo "-------- PYTHON OUTPUT ----------"
-python3 main.py --MORE_ARGUMENTS --use-gpu
+
+
+python3 -m EDSR/main.py config.yaml
 echo "---------------------------------"
 
 # Deactivate environment again

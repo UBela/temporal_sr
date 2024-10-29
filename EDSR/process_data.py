@@ -124,3 +124,6 @@ if __name__ == '__main__':
     print(len(train_set), len(test_set))
     hr, lr = train_set[0]
     print(hr.shape, lr.shape)
+
+
+#TODO model output weird, check if normalization is correct
