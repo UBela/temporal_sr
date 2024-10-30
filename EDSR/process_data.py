@@ -47,25 +47,25 @@ def normalize_data(data):
         data[var] = 2 * data[var] - 1
         
     return data, scale
+import yaml
 
-def get_means_stds(dataset, config_path):
-    means = {}
-    stds = {}
-
-    for var in dataset:
-        means[var] = float(dataset[var].values.mean())
-        stds[var] = float(dataset[var].values.std())
-
+def save_means_stds(config_path, features):
+    means = features.view(features.shape[0], -1).mean(dim=1)
+    stds = features.view(features.shape[0], -1).std(dim=1)
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file) or {}
-
-    config['means'] = means
-    config['stds'] = stds
-
+        
+        training_config = config.get("TrainingConfig", {})
+    
+        for mean, std, var in zip(means, stds, features):
+            training_config[f'mean_{var}'] = float(mean)
+            training_config[f'std_{var}'] = float(std)
+        
+        config["TrainingConfig"] = training_config
+        
     with open(config_path, 'w') as file:
         yaml.dump(config, file)
 
-    return means, stds
 
 def average_pooling(data, scale, to_int=False):
     new_h, new_w = data.shape[0] // scale, data.shape[1] // scale
@@ -74,18 +74,21 @@ def average_pooling(data, scale, to_int=False):
         data = np.uint8(data)
     return data
 
+
 class SuperresDataset(Dataset):
     def __init__(self, dataset, means, stds, scaling_factor=SCALE, features=FEATURE_LIST):
         super().__init__()
         self.hr_data = dataset
         self.scale = scaling_factor
         self.features = features
-        self.means = [means[var] for var in features]
-        self.stds = [stds[var] for var in features]
+        
+        self.means = means
+        self.stds = stds
+       
         self.transform = transforms.Compose([
             transforms.Normalize(mean=self.means, std=self.stds)
         ])
-
+       
     def __len__(self):
         return len(self.hr_data['valid_time'].values)
 
@@ -94,6 +97,7 @@ class SuperresDataset(Dataset):
         lr_patches = []
 
         for var in self.features:
+              
             hr_patch = self.hr_data[var][index, :, :].values
             lr_patch = average_pooling(hr_patch, self.scale)
 
@@ -102,18 +106,19 @@ class SuperresDataset(Dataset):
 
         hr_patches = torch.stack(hr_patches, axis=0)
         lr_patches = torch.stack(lr_patches, axis=0)
-
+        
         hr_patches = self.transform(hr_patches)
         lr_patches = self.transform(lr_patches)
+        
         return lr_patches, hr_patches[:2, :, :]
 
 def initialize_dataset(config):
     data = load_dataset(DATA_PATH, config.train_start_date, config.test_end_date, PATCH_SIZE)
-    means, stds = get_means_stds(data, config.config_path)
-
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
+    means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
+    stds = [config.std_u10, config.std_v10, config.std_d2m, config.std_t2m, config.std_msl, config.std_tp]
     train_dataset = SuperresDataset(train_data, means, stds)
     test_dataset = SuperresDataset(test_data, means, stds)
 
@@ -123,6 +128,7 @@ if __name__ == '__main__':
     train_set, test_set = initialize_dataset(config)
     print(len(train_set), len(test_set))
     hr, lr = train_set[0]
+    hr2, lr2 = train_set[1]
     print(hr.shape, lr.shape)
 
 

@@ -1,6 +1,6 @@
 TrainingConfig:
-  config_path: /home/bela/thesis/temporal_sr/config.yaml
-  data_path: /home/bela/thesis/temporal_sr/data/data_stream-oper.nc
+  config_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/config.yaml
+  data_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/data/data_stream-oper.nc
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -11,41 +11,27 @@ TrainingConfig:
   - msl
   - tp
   in_channels: 6
-  mean_d2m: 279.0875244140625
-  mean_msl: 101628.9921875
-  mean_t2m: 283.34393310546875
-  mean_tp: 0.00010196938819717616
-  mean_u10: 1.130829095840454
-  mean_v10: 0.652614176273346
-  model_path: /home/bela/thesis/temporal_sr/EDSR/model
-  num_train_epochs: 10
+  mean_d2m: 271.56866455078125
+  mean_msl: 100409.0234375
+  mean_t2m: 273.1571044921875
+  mean_tp: 0.00010626256698742509
+  mean_u10: 3.9380574226379395
+  mean_v10: -0.4301735758781433
+  model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/model
+  num_train_epochs: 100
   out_channels: 2
-  output_dir: /home/bela/thesis/temporal_sr/EDSR/output
+  output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output
   patch_size: 32
-  preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
+  preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/preds
   scaling_factor: 2
-  std_d2m: 6.190201282501221
-  std_msl: 968.9214477539062
-  std_t2m: 7.458954811096191
-  std_tp: 0.0003048087237402797
-  std_u10: 3.239439010620117
-  std_v10: 2.6921465396881104
-  test_end_date: '2023-12-31'
-  test_start_date: '2023-01-01'
+  std_d2m: 1.780206561088562
+  std_msl: 463.9028625488281
+  std_t2m: 1.826715350151062
+  std_tp: 0.0001541570818517357
+  std_u10: 1.5127813816070557
+  std_v10: 1.7190018892288208
+  test_end_date: '1983-12-31'
+  test_start_date: '1983-01-01'
   train_batch_size: 16
-  train_end_date: '2022-12-31'
-  train_start_date: '2020-01-01'
-means:
-  d2m: 279.0875244140625
-  msl: 101628.9921875
-  t2m: 283.34393310546875
-  tp: 0.00010196938819717616
-  u10: 1.130829095840454
-  v10: 0.652614176273346
-stds:
-  d2m: 6.190201282501221
-  msl: 968.9214477539062
-  t2m: 7.458954811096191
-  tp: 0.0003048087237402797
-  u10: 3.239439010620117
-  v10: 2.6921465396881104
+  train_end_date: '1982-12-31'
+  train_start_date: '1980-01-01'
