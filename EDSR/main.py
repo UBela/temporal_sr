@@ -1,8 +1,8 @@
-from train import CustomTrainer
-from model import EDSRModel
+from EDSR.train import CustomTrainer
+from EDSR.model import EDSRModel
 from super_image import TrainingArguments
 
-from process_data import initialize_dataset
+from EDSR.process_data import initialize_dataset
 import os
 import torch
 import time
@@ -31,7 +31,7 @@ model = EDSRModel(in_channels=config.in_channels,
 model.to(device)
 training_args =TrainingArguments(
     output_dir=config.output_dir,
-    num_train_epochs=2, #change before running
+    num_train_epochs=config.num_train_epochs, #change before running
 )
 trainer = CustomTrainer(model, training_args, train_dataset, eval_dataset)
 trainer.args.per_device_train_batch_size = config.train_batch_size

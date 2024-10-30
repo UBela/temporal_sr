@@ -29,8 +29,8 @@ DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
 # Extract means and stds from the configuration
-means = [config[f'mean_{var}'] for var in ['u10', 'v10', 'd2m', 't2m', 'msl', 'tp']]
-stds = [config[f'std_{var}'] for var in ['u10', 'v10', 'd2m', 't2m', 'msl', 'tp']]
+means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
+stds = [config.std_u10, config.std_v10, config.std_d2m, config.std_t2m, config.std_msl, config.std_tp]
 
 class CustomTrainer(Trainer):
     
@@ -145,7 +145,6 @@ class CustomTrainer(Trainer):
         all_labels = []
 
         for lr_patches, hr_patches in eval_dataloader:
-            #get max of the lr_patches and hr_patches
            
             hr_patches = hr_patches.to(device)
             lr_patches = lr_patches.to(device)
@@ -153,21 +152,21 @@ class CustomTrainer(Trainer):
             
             with torch.no_grad():
                 pred = self.model(lr_patches)
-
+            pred_features = self.denormalize(pred)            
+            label_features = self.denormalize(hr_patches)
             if eval_step <= 1:
                 # Plotting
                 fix, ax = plt.subplots(1, 3, figsize=(15, 5))
                 ax[0].imshow(lr_patches[0, 0, :, :].cpu().numpy(), cmap='inferno')
                 ax[0].set_title('Low resolution Input')
-                ax[1].imshow(hr_patches[0, 0, :, :].cpu().numpy(), cmap='inferno')
+                ax[1].imshow(label_features[0, 0, :, :].cpu().numpy(), cmap='inferno')
                 ax[1].set_title('High resolution Label')
-                ax[2].imshow(pred[0, 0, :, :].cpu().numpy(), cmap='inferno')
+                ax[2].imshow(pred_features[0, 0, :, :].cpu().numpy(), cmap='inferno')
                 ax[2].set_title('Super resolution Output')
                 
                 plt.savefig(f'{config.output_dir}/output_epoch_{epoch}.png')
 
-            pred_features = self.denormalize(pred)            
-            label_features = self.denormalize(hr_patches)
+            
 
             sr_patches.append(pred_features.squeeze(0).to('cpu'))
             wind_speed_pred = self.get_wind_speed(pred_features[:, 0, :, :], pred_features[:, 1, :, :])
