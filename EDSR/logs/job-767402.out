@@ -1,0 +1,6 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+MSE: 0.0001, R²: 0.9807
+Save model
+Inference time: 12.514650344848633 seconds.
+---------------------------------

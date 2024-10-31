@@ -1,7 +1,6 @@
 from super_image import EdsrModel, EdsrConfig
 import torch
 import torch.nn as nn
-#TODO make model input and output variable
 class EDSRModel(EdsrModel):
     def __init__(self, in_channels, out_channels, feature_channels, scaling_factor):
         

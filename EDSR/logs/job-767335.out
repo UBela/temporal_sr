@@ -1,0 +1,207 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+Total number of parameters: 1371010
+Training arguments: TrainingArguments(output_dir='/mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output', overwrite_output_dir=False, learning_rate=0.0001, gamma=0.5, num_train_epochs=100, save_steps=500, save_total_limit=None, no_cuda=False, seed=123, fp16=False, per_device_train_batch_size=32, local_rank=-1, dataloader_num_workers=0, dataloader_pin_memory=True)
+MSE: 5.3763, R²: -1.6248
+Save model
+MSE: 0.6731, R²: -0.5826
+Save model
+MSE: 0.1933, R²: -0.1051
+Save model
+MSE: 0.1140, R²: -0.0309
+Save model
+MSE: 0.0920, R²: -0.0356
+Save model
+MSE: 0.0805, R²: -0.0264
+Save model
+MSE: 0.0720, R²: -0.0089
+Save model
+MSE: 0.0633, R²: 0.0132
+Save model
+MSE: 0.0545, R²: 0.0297
+Save model
+MSE: 0.0460, R²: 0.0471
+Save model
+MSE: 0.0388, R²: 0.0651
+Save model
+MSE: 0.0331, R²: 0.0754
+Save model
+MSE: 0.0283, R²: 0.0797
+Save model
+MSE: 0.0249, R²: 0.0721
+Save model
+MSE: 0.0211, R²: 0.0938
+Save model
+MSE: 0.0174, R²: 0.1340
+Save model
+MSE: 0.0145, R²: 0.1861
+Save model
+MSE: 0.0126, R²: 0.2200
+Save model
+MSE: 0.0111, R²: 0.2561
+Save model
+MSE: 0.0098, R²: 0.2912
+Save model
+MSE: 0.0089, R²: 0.3231
+Save model
+MSE: 0.0078, R²: 0.3648
+Save model
+MSE: 0.0066, R²: 0.4087
+Save model
+MSE: 0.0061, R²: 0.4462
+Save model
+MSE: 0.0053, R²: 0.4921
+Save model
+MSE: 0.0045, R²: 0.5451
+Save model
+MSE: 0.0043, R²: 0.5501
+Save model
+MSE: 0.0042, R²: 0.5617
+Save model
+MSE: 0.0039, R²: 0.5755
+Save model
+MSE: 0.0036, R²: 0.6057
+Save model
+MSE: 0.0032, R²: 0.6397
+Save model
+MSE: 0.0025, R²: 0.6923
+Save model
+MSE: 0.0026, R²: 0.6878
+Save model
+MSE: 0.0022, R²: 0.7256
+Save model
+MSE: 0.0022, R²: 0.7306
+Save model
+MSE: 0.0018, R²: 0.7725
+Save model
+MSE: 0.0026, R²: 0.7001
+Save model
+MSE: 0.0020, R²: 0.7531
+Save model
+MSE: 0.0020, R²: 0.7429
+Save model
+MSE: 0.0015, R²: 0.8114
+Save model
+MSE: 0.0015, R²: 0.8083
+Save model
+MSE: 0.0016, R²: 0.7954
+Save model
+MSE: 0.0012, R²: 0.8354
+Save model
+MSE: 0.0011, R²: 0.8492
+Save model
+MSE: 0.0012, R²: 0.8427
+Save model
+MSE: 0.0012, R²: 0.8448
+Save model
+MSE: 0.0011, R²: 0.8553
+Save model
+MSE: 0.0012, R²: 0.8423
+Save model
+MSE: 0.0009, R²: 0.8727
+Save model
+MSE: 0.0008, R²: 0.8950
+Save model
+MSE: 0.0008, R²: 0.8924
+Save model
+MSE: 0.0010, R²: 0.8726
+Save model
+MSE: 0.0009, R²: 0.8819
+Save model
+MSE: 0.0006, R²: 0.9134
+Save model
+MSE: 0.0016, R²: 0.7584
+Save model
+MSE: 0.0005, R²: 0.9236
+Save model
+MSE: 0.0005, R²: 0.9269
+Save model
+MSE: 0.0006, R²: 0.9175
+Save model
+MSE: 0.0006, R²: 0.9205
+Save model
+MSE: 0.0006, R²: 0.9098
+Save model
+MSE: 0.0005, R²: 0.9360
+Save model
+MSE: 0.0005, R²: 0.9316
+Save model
+MSE: 0.0007, R²: 0.8877
+Save model
+MSE: 0.0011, R²: 0.8551
+Save model
+MSE: 0.0006, R²: 0.8980
+Save model
+MSE: 0.0006, R²: 0.9142
+Save model
+MSE: 0.0005, R²: 0.9361
+Save model
+MSE: 0.0004, R²: 0.9489
+Save model
+MSE: 0.0005, R²: 0.9346
+Save model
+MSE: 0.0005, R²: 0.9298
+Save model
+MSE: 0.0005, R²: 0.9282
+Save model
+MSE: 0.0003, R²: 0.9527
+Save model
+MSE: 0.0003, R²: 0.9583
+Save model
+MSE: 0.0008, R²: 0.8681
+Save model
+MSE: 0.0003, R²: 0.9575
+Save model
+MSE: 0.0002, R²: 0.9678
+Save model
+MSE: 0.0008, R²: 0.8937
+Save model
+MSE: 0.0009, R²: 0.8698
+Save model
+MSE: 0.0003, R²: 0.9605
+Save model
+MSE: 0.0002, R²: 0.9710
+Save model
+MSE: 0.0001, R²: 0.9824
+Save model
+MSE: 0.0001, R²: 0.9831
+Save model
+MSE: 0.0001, R²: 0.9834
+Save model
+MSE: 0.0001, R²: 0.9834
+Save model
+MSE: 0.0001, R²: 0.9835
+Save model
+MSE: 0.0001, R²: 0.9836
+Save model
+MSE: 0.0001, R²: 0.9837
+Save model
+MSE: 0.0001, R²: 0.9837
+Save model
+MSE: 0.0001, R²: 0.9838
+Save model
+MSE: 0.0001, R²: 0.9838
+Save model
+MSE: 0.0001, R²: 0.9836
+Save model
+MSE: 0.0001, R²: 0.9835
+Save model
+MSE: 0.0001, R²: 0.9833
+Save model
+MSE: 0.0001, R²: 0.9831
+Save model
+MSE: 0.0001, R²: 0.9827
+Save model
+MSE: 0.0001, R²: 0.9822
+Save model
+MSE: 0.0001, R²: 0.9819
+Save model
+MSE: 0.0001, R²: 0.9813
+Save model
+MSE: 0.0001, R²: 0.9809
+Save model
+MSE: 0.0001, R²: 0.9806
+Final evaluation done. MSE: 0.0001, R²: 0.9806
+Save model
+Training time: 2490.4087891578674 seconds
+---------------------------------

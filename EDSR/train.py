@@ -11,6 +11,9 @@ import time
 import matplotlib.pyplot as plt
 from torcheval.metrics.functional import r2_score 
 from typing import Optional, Union
+import numpy as np
+
+
 def load_config(file_path):
     with open(file_path, "r") as file:
         config = yaml.safe_load(file)
@@ -27,7 +30,23 @@ config = Box(load_config(args.config_path)['TrainingConfig'])
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
+class AverageMeter(object):
+    def __init__(self):
+        self.reset()
 
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+        
+        
 # Extract means and stds from the configuration
 means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
 stds = [config.std_u10, config.std_v10, config.std_d2m, config.std_t2m, config.std_msl, config.std_tp]
@@ -36,7 +55,8 @@ class CustomTrainer(Trainer):
     
     def __init__(self, model, args, train_dataset, eval_dataset=None):
         super().__init__(model, args, train_dataset, eval_dataset)
-        
+        self.train_losses = []
+        self.eval_mses = []
     def initialize_dataloader(self):
         if self.train_dataset is None:
             raise ValueError('train_dataset is not defined.')
@@ -85,13 +105,14 @@ class CustomTrainer(Trainer):
             self.model = nn.DataParallel(self.model)
             
         optimizer = Adam(self.model.parameters(), lr=learning_rate)
-        scheduler = lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=args.gamma)
+        scheduler = lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=self.args.gamma)
         
         for epoch in range(epochs_trained, num_train_epochs):
             for param_group in optimizer.param_groups:
                 param_group['lr'] = learning_rate * (0.1 ** (epoch // int(num_train_epochs * 0.8)))
                 
             self.model.train()
+            epoch_losses = AverageMeter()
             
             with tqdm(total=len(train_dataset) - len(train_dataset) % train_batch_size) as t:
                 t.set_description(f'Epoch {epoch}/{num_train_epochs - 1}')
@@ -107,20 +128,23 @@ class CustomTrainer(Trainer):
                     label_wind_speed = self.get_wind_speed(label_u_10, label_v_10)
                     
                     loss = criterion(pred_wind_speed, label_wind_speed)
-                    sum_loss += loss.item() * len(lr_patches)
-                    total_len += len(lr_patches)
+                    epoch_losses.update(loss.item(), len(lr_patches))
+
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
                     scheduler.step()
 
-                    t.set_postfix(loss=sum_loss / total_len)
+                    t.set_postfix(loss=f'{epoch_losses.avg:.6}')
                     t.update(len(lr_patches))
-                self.eval(epoch) 
+                    
+                self.train_losses.append(epoch_losses.avg)   
+                eval_mse = self.eval(epoch) 
+                self.eval_mses.append(eval_mse)
 
     def denormalize(self, data):
         for i in range(data.shape[1]):
-            data[:, i, :, :] = data[:, i, :, :] * stds[i] + means[i]
+            data[:, i, :, :] += means[i]
         return data
     
     
@@ -145,27 +169,29 @@ class CustomTrainer(Trainer):
         all_labels = []
 
         for lr_patches, hr_patches in eval_dataloader:
-           
+        
             hr_patches = hr_patches.to(device)
             lr_patches = lr_patches.to(device)
             eval_step += 1
             
             with torch.no_grad():
                 pred = self.model(lr_patches)
-            pred_features = self.denormalize(pred)            
-            label_features = self.denormalize(hr_patches)
+            #pred_features = self.denormalize(pred)            
+            #label_features = self.denormalize(hr_patches)
+            pred_features = pred
+            label_features = hr_patches
             if eval_step <= 1:
                 # Plotting
                 fix, ax = plt.subplots(1, 3, figsize=(15, 5))
                 ax[0].imshow(lr_patches[0, 0, :, :].cpu().numpy(), cmap='inferno')
-                ax[0].set_title('Low resolution Input')
+                ax[0].set_title('Low-resolution Input')
                 ax[1].imshow(label_features[0, 0, :, :].cpu().numpy(), cmap='inferno')
-                ax[1].set_title('High resolution Label')
+                ax[1].set_title('High-resolution Label')
                 ax[2].imshow(pred_features[0, 0, :, :].cpu().numpy(), cmap='inferno')
-                ax[2].set_title('Super resolution Output')
+                ax[2].set_title('Super-resolution Output')
                 
                 plt.savefig(f'{config.output_dir}/output_epoch_{epoch}.png')
-
+                plt.close(fix)
             
 
             sr_patches.append(pred_features.squeeze(0).to('cpu'))
@@ -177,11 +203,9 @@ class CustomTrainer(Trainer):
             
             
             total_mse += self.calc_mse(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
-        # get highest value of pred_features
         
-        #print(pred_features)
         preds_tensor = torch.stack(sr_patches)
-        torch.save(preds_tensor, f'{config.preds_dir}/output_{scale}x.pt')
+        torch.save(preds_tensor, f'{config.preds_dir}/output_1985_{scale}x.pt')
 
         total_mse /= len(eval_dataloader)
         #to tensor
@@ -196,7 +220,32 @@ class CustomTrainer(Trainer):
 
         print('Save model')
         self.save_model(output_dir=config.model_path)
+        return total_mse
+    
+    def plot_metrics(self):
+        epochs = range(len(self.train_losses))
+        self.train_losses = np.log(self.train_losses)
+        self.eval_mses = np.log(self.eval_mses)
+        plt.figure(figsize=(12, 5))
 
+        # Plot training loss
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs, self.train_losses, label="Training Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log L1 Loss")
+        plt.title("Training Loss Over Epochs")
+        plt.legend()
+
+        # Plot evaluation MSE
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs, self.eval_mses, label="Evaluation MSE", color="orange")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log MSE")
+        plt.title("Evaluation MSE Over Epochs")
+        plt.legend()
+
+        plt.savefig(f'{config.output_dir}/training_loss_eval_mse.png')
+        plt.close()
 
 if __name__ == '__main__':
     
