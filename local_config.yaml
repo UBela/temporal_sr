@@ -1,0 +1,37 @@
+TrainingConfig:
+  config_path: /home/bela/thesis/temporal_sr/local_config.yaml
+  data_path: /home/bela/thesis/data/era5_training.nc
+  eval_batch_size: 1
+  feature_channels: 64
+  feature_list:
+  - u10
+  - v10
+  - d2m
+  - t2m
+  - msl
+  - tp
+  in_channels: 6
+  mean_d2m: 271.56866455078125
+  mean_msl: 100409.0234375
+  mean_t2m: 273.1571044921875
+  mean_tp: 0.00010626256698742509
+  mean_u10: 0.4288536608219147
+  mean_v10: 0.43577271699905396
+  model_path: /home/bela/thesis/temporal_sr/EDSR/model
+  num_train_epochs: 10
+  out_channels: 2
+  output_dir: /home/bela/thesis/temporal_sr/EDSR/output
+  patch_size: 32
+  preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
+  scaling_factor: 2
+  std_d2m: 1.780206561088562
+  std_msl: 463.9028625488281
+  std_t2m: 1.826715350151062
+  std_tp: 0.0001541570818517357
+  std_u10: 0.08211711049079895
+  std_v10: 0.07824576646089554
+  test_end_date: '1983-12-31'
+  test_start_date: '1983-01-01'
+  train_batch_size: 16
+  train_end_date: '1982-12-31'
+  train_start_date: '1980-01-01'
