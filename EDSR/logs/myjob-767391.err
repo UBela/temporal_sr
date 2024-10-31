@@ -1,0 +1,9 @@
+/mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/main.py:56: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  pretrained_model.load_state_dict(torch.load(f"{config.model_path}/pytorch_model_{config.scaling_factor}x.pt"))
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/main.py", line 58, in <module>
+    tester = CustomTrainer(pretrained_model, training_args, train_dataset, eval_dataset)
+                                             ^^^^^^^^^^^^^
+NameError: name 'training_args' is not defined

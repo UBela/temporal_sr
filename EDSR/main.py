@@ -23,22 +23,41 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(f"Device: {device}")
 
 train_dataset, eval_dataset = initialize_dataset(config)
-model = EDSRModel(in_channels=config.in_channels,
-                  out_channels=config.out_channels,
-                  feature_channels=config.feature_channels, 
-                  scaling_factor=config.scaling_factor)
-
-model.to(device)
 training_args =TrainingArguments(
-    output_dir=config.output_dir,
-    num_train_epochs=config.num_train_epochs, #change before running
-)
-trainer = CustomTrainer(model, training_args, train_dataset, eval_dataset)
-trainer.args.per_device_train_batch_size = config.train_batch_size
-total_params = sum(p.numel() for p in model.parameters())
-print(f"Total number of parameters: {total_params}")
-print(f'Training arguments: {training_args}')
-train_start_time = time.time()
-trainer.train()
-train_end_time = time.time()
-print(f"Training time: {train_end_time - train_start_time} seconds")
+        output_dir=config.output_dir,
+        num_train_epochs=config.num_train_epochs)
+
+if config.pretraining:
+    
+    model = EDSRModel(in_channels=config.in_channels,
+                    out_channels=config.out_channels,
+                    feature_channels=config.feature_channels, 
+                    scaling_factor=config.scaling_factor)
+
+    model.to(device)
+    
+    trainer = CustomTrainer(model, training_args, train_dataset, eval_dataset)
+    trainer.args.per_device_train_batch_size = config.train_batch_size
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total number of parameters: {total_params}")
+    print(f'Training arguments: {training_args}')
+    train_start_time = time.time()
+    trainer.train()
+    train_end_time = time.time()
+    print(f"Training time: {train_end_time - train_start_time} seconds")
+    trainer.plot_metrics()
+
+pretrained_model = EDSRModel(in_channels=config.in_channels,
+                    out_channels=config.out_channels,
+                    feature_channels=config.feature_channels, 
+                    scaling_factor=config.scaling_factor)
+
+#Inference
+pretrained_model.load_state_dict(torch.load(f"{config.model_path}/pytorch_model_{config.scaling_factor}x.pt", weights_only=False))
+pretrained_model.to(device)
+tester = CustomTrainer(pretrained_model, training_args, train_dataset, eval_dataset)
+tester.args.num_train_epochs = 1
+test_start_time = time.time()
+tester.eval(epoch=0)
+test_end_time = time.time()
+print(f"Inference time: {test_end_time - test_start_time} seconds.")

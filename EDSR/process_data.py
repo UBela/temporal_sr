@@ -36,33 +36,50 @@ def load_dataset(data, start, end, patch_size):
         longitude=slice(0, patch_size), latitude=slice(0, patch_size))
     return dataset
 
-def normalize_data(data):
-    scale = {}
+def normalize_data(data, custom_scale = None):
+    returned_scale = {}
     for var in data:
-        min_val = data[var].values.min()
-        max_val = data[var].values.max()
         
+        if custom_scale and var in custom_scale:
+            min_val = custom_scale[var]['min']
+            max_val = custom_scale[var]['max']
+        else:
+            min_val = data[var].values.min()
+            max_val = data[var].values.max()
+            
+            returned_scale[var] = {'min': min_val, 'max': max_val}
+            
+            
         data[var] = (data[var] - min_val) / (max_val - min_val)
-        scale[var] = {'min': min_val, 'max': max_val}
-        data[var] = 2 * data[var] - 1
         
-    return data, scale
-import yaml
+        
+    return data, returned_scale
 
-def save_means_stds(config_path, features):
-    means = features.view(features.shape[0], -1).mean(dim=1)
-    stds = features.view(features.shape[0], -1).std(dim=1)
+
+def save_means_stds(config_path, dataset, feature_names):
+    # Stack all data for mean and std calculation
+    feature_tensors = []
+    for i in range(len(dataset)):
+        lr_patches, _ = dataset[i]  
+        feature_tensors.append(lr_patches)
+    
+    features = torch.stack(feature_tensors, dim=0)  # Shape: (num_samples, num_channels, H, W)
+    means = features.view(features.shape[1], -1).mean(dim=1)  # Mean across spatial dimensions
+    stds = features.view(features.shape[1], -1).std(dim=1)  # Std across spatial dimensions
+    
+    # Load the existing configuration
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file) or {}
-        
-        training_config = config.get("TrainingConfig", {})
+    training_config = config.get("TrainingConfig", {})
+
+    # Save means and stds with feature names
+    for mean, std, var in zip(means, stds, feature_names):
+        training_config[f'mean_{var}'] = float(mean)
+        training_config[f'std_{var}'] = float(std)
     
-        for mean, std, var in zip(means, stds, features):
-            training_config[f'mean_{var}'] = float(mean)
-            training_config[f'std_{var}'] = float(std)
-        
-        config["TrainingConfig"] = training_config
-        
+    config["TrainingConfig"] = training_config
+
+    # Write updated configuration to file
     with open(config_path, 'w') as file:
         yaml.dump(config, file)
 
@@ -76,18 +93,11 @@ def average_pooling(data, scale, to_int=False):
 
 
 class SuperresDataset(Dataset):
-    def __init__(self, dataset, means, stds, scaling_factor=SCALE, features=FEATURE_LIST):
+    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST):
         super().__init__()
         self.hr_data = dataset
         self.scale = scaling_factor
         self.features = features
-        
-        self.means = means
-        self.stds = stds
-       
-        self.transform = transforms.Compose([
-            transforms.Normalize(mean=self.means, std=self.stds)
-        ])
        
     def __len__(self):
         return len(self.hr_data['valid_time'].values)
@@ -107,8 +117,6 @@ class SuperresDataset(Dataset):
         hr_patches = torch.stack(hr_patches, axis=0)
         lr_patches = torch.stack(lr_patches, axis=0)
         
-        hr_patches = self.transform(hr_patches)
-        lr_patches = self.transform(lr_patches)
         
         return lr_patches, hr_patches[:2, :, :]
 
@@ -117,11 +125,22 @@ def initialize_dataset(config):
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
-    means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
-    stds = [config.std_u10, config.std_v10, config.std_d2m, config.std_t2m, config.std_msl, config.std_tp]
-    train_dataset = SuperresDataset(train_data, means, stds)
-    test_dataset = SuperresDataset(test_data, means, stds)
-
+    train_data, train_scale = normalize_data(train_data)
+    test_data, _ = normalize_data(test_data, train_scale)
+    
+    
+    
+    
+    
+    """
+    for i, var in enumerate(config.feature_list):
+        train_data[var] = (train_data[var] - means[i]) 
+        test_data[var] = (test_data[var] - means[i]) 
+    """
+    train_dataset = SuperresDataset(train_data)
+    #save_means_stds(config.config_path, train_dataset, config.feature_list)
+    test_dataset = SuperresDataset(test_data)
+   
     return train_dataset, test_dataset
 
 if __name__ == '__main__':
