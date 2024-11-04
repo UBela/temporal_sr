@@ -30,13 +30,15 @@ TRAIN_START = config.train_start_date
 TRAIN_END = config.train_end_date
 TEST_START = config.test_start_date
 TEST_END = config.test_end_date
-
+means = [config.mean_u10, config.mean_v10, 
+         config.mean_d2m, config.mean_t2m,
+         config.mean_msl, config.mean_tp]
 def load_dataset(data, start, end, patch_size):
     dataset = xr.open_dataset(data).sel(valid_time=slice(start, end)).isel(
         longitude=slice(0, patch_size), latitude=slice(0, patch_size))
     return dataset
 
-def normalize_data(data, custom_scale = None):
+def rescale_data(data, custom_scale = None):
     returned_scale = {}
     for var in data:
         
@@ -98,7 +100,6 @@ class SuperresDataset(Dataset):
         self.hr_data = dataset
         self.scale = scaling_factor
         self.features = features
-       
     def __len__(self):
         return len(self.hr_data['valid_time'].values)
 
@@ -125,18 +126,10 @@ def initialize_dataset(config):
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
-    train_data, train_scale = normalize_data(train_data)
-    test_data, _ = normalize_data(test_data, train_scale)
+    train_data, train_scale = rescale_data(train_data)
+    test_data, _ = rescale_data(test_data, train_scale)
+    print(train_scale)
     
-    
-    
-    
-    
-    """
-    for i, var in enumerate(config.feature_list):
-        train_data[var] = (train_data[var] - means[i]) 
-        test_data[var] = (test_data[var] - means[i]) 
-    """
     train_dataset = SuperresDataset(train_data)
     #save_means_stds(config.config_path, train_dataset, config.feature_list)
     test_dataset = SuperresDataset(test_data)
@@ -150,5 +143,3 @@ if __name__ == '__main__':
     hr2, lr2 = train_set[1]
     print(hr.shape, lr.shape)
 
-
-#TODO model output weird, check if normalization is correct

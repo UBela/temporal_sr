@@ -1,0 +1,211 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+{'u10': {'min': np.float32(-15.279355), 'max': np.float32(24.534174)}, 'v10': {'min': np.float32(-16.699005), 'max': np.float32(21.35775)}, 'd2m': {'min': np.float32(245.78934), 'max': np.float32(296.0891)}, 't2m': {'min': np.float32(248.4476), 'max': np.float32(306.05835)}, 'msl': {'min': np.float32(96446.56), 'max': np.float32(104656.41)}, 'tp': {'min': np.float32(0.0), 'max': np.float32(0.01362586)}}
+Total number of parameters: 1518722
+Training arguments: TrainingArguments(output_dir='/mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output', overwrite_output_dir=False, learning_rate=0.0001, gamma=0.5, num_train_epochs=100, save_steps=500, save_total_limit=None, no_cuda=False, seed=123, fp16=False, per_device_train_batch_size=32, local_rank=-1, dataloader_num_workers=0, dataloader_pin_memory=True)
+MSE: 0.232792, R²: -0.124276, MAE: 0.356926
+Save model
+MSE: 0.093791, R²: -0.112234, MAE: 0.247192
+Save model
+MSE: 0.070992, R²: -0.058870, MAE: 0.213324
+Save model
+MSE: 0.052833, R²: 0.000644, MAE: 0.181492
+Save model
+MSE: 0.035246, R²: 0.059498, MAE: 0.146461
+Save model
+MSE: 0.023125, R²: 0.103932, MAE: 0.118085
+Save model
+MSE: 0.015710, R²: 0.163281, MAE: 0.097333
+Save model
+MSE: 0.011706, R²: 0.222911, MAE: 0.084022
+Save model
+MSE: 0.009092, R²: 0.288329, MAE: 0.074085
+Save model
+MSE: 0.007091, R²: 0.359088, MAE: 0.065345
+Save model
+MSE: 0.005831, R²: 0.418529, MAE: 0.059194
+Save model
+MSE: 0.004932, R²: 0.472501, MAE: 0.054400
+Save model
+MSE: 0.004266, R²: 0.516548, MAE: 0.050540
+Save model
+MSE: 0.003754, R²: 0.555260, MAE: 0.047386
+Save model
+MSE: 0.003325, R²: 0.594190, MAE: 0.044577
+Save model
+MSE: 0.002921, R²: 0.632964, MAE: 0.041722
+Save model
+MSE: 0.002608, R²: 0.665001, MAE: 0.039378
+Save model
+MSE: 0.002345, R²: 0.692308, MAE: 0.037305
+Save model
+MSE: 0.002149, R²: 0.713056, MAE: 0.035677
+Save model
+MSE: 0.002000, R²: 0.730713, MAE: 0.034403
+Save model
+MSE: 0.001867, R²: 0.746746, MAE: 0.033211
+Save model
+MSE: 0.001752, R²: 0.760781, MAE: 0.032164
+Save model
+MSE: 0.001610, R²: 0.776066, MAE: 0.030820
+Save model
+MSE: 0.001585, R²: 0.781158, MAE: 0.030602
+Save model
+MSE: 0.001513, R²: 0.790148, MAE: 0.029913
+Save model
+MSE: 0.001361, R²: 0.807088, MAE: 0.028319
+Save model
+MSE: 0.001293, R²: 0.815618, MAE: 0.027600
+Save model
+MSE: 0.001201, R²: 0.828485, MAE: 0.026563
+Save model
+MSE: 0.001127, R²: 0.838074, MAE: 0.025782
+Save model
+MSE: 0.001092, R²: 0.840852, MAE: 0.025478
+Save model
+MSE: 0.001117, R²: 0.837850, MAE: 0.025599
+Save model
+MSE: 0.001195, R²: 0.826672, MAE: 0.026559
+Save model
+MSE: 0.001168, R²: 0.833205, MAE: 0.026429
+Save model
+MSE: 0.001376, R²: 0.806523, MAE: 0.029072
+Save model
+MSE: 0.001080, R²: 0.841001, MAE: 0.025277
+Save model
+MSE: 0.001025, R²: 0.847769, MAE: 0.024620
+Save model
+MSE: 0.001073, R²: 0.842648, MAE: 0.025333
+Save model
+MSE: 0.001154, R²: 0.831158, MAE: 0.026513
+Save model
+MSE: 0.001095, R²: 0.838147, MAE: 0.025745
+Save model
+MSE: 0.001004, R²: 0.852420, MAE: 0.024619
+Save model
+MSE: 0.000843, R²: 0.877181, MAE: 0.022254
+Save model
+MSE: 0.000735, R²: 0.889200, MAE: 0.020816
+Save model
+MSE: 0.000670, R²: 0.901544, MAE: 0.019732
+Save model
+MSE: 0.000628, R²: 0.907516, MAE: 0.019283
+Save model
+MSE: 0.000914, R²: 0.871971, MAE: 0.023865
+Save model
+MSE: 0.000621, R²: 0.909186, MAE: 0.019353
+Save model
+MSE: 0.000614, R²: 0.912686, MAE: 0.019059
+Save model
+MSE: 0.000626, R²: 0.905914, MAE: 0.019511
+Save model
+MSE: 0.003270, R²: 0.556355, MAE: 0.050588
+Save model
+MSE: 0.000601, R²: 0.913876, MAE: 0.018686
+Save model
+MSE: 0.000591, R²: 0.916325, MAE: 0.018642
+Save model
+MSE: 0.000542, R²: 0.923662, MAE: 0.017738
+Save model
+MSE: 0.000567, R²: 0.921018, MAE: 0.018177
+Save model
+MSE: 0.000764, R²: 0.898361, MAE: 0.021950
+Save model
+MSE: 0.000708, R²: 0.905720, MAE: 0.021146
+Save model
+MSE: 0.000716, R²: 0.894692, MAE: 0.021544
+Save model
+MSE: 0.000541, R²: 0.920583, MAE: 0.017907
+Save model
+MSE: 0.000588, R²: 0.900315, MAE: 0.018840
+Save model
+MSE: 0.000437, R²: 0.935316, MAE: 0.016269
+Save model
+MSE: 0.000432, R²: 0.936879, MAE: 0.015919
+Save model
+MSE: 0.000599, R²: 0.907648, MAE: 0.019687
+Save model
+MSE: 0.000486, R²: 0.931145, MAE: 0.016934
+Save model
+MSE: 0.000830, R²: 0.893301, MAE: 0.023159
+Save model
+MSE: 0.000478, R²: 0.932295, MAE: 0.016897
+Save model
+MSE: 0.000897, R²: 0.878568, MAE: 0.024384
+Save model
+MSE: 0.000419, R²: 0.939366, MAE: 0.015573
+Save model
+MSE: 0.000435, R²: 0.934949, MAE: 0.016083
+Save model
+MSE: 0.000416, R²: 0.936206, MAE: 0.016017
+Save model
+MSE: 0.000325, R²: 0.951511, MAE: 0.013779
+Save model
+MSE: 0.001222, R²: 0.806672, MAE: 0.029378
+Save model
+MSE: 0.000387, R²: 0.942278, MAE: 0.015393
+Save model
+MSE: 0.000308, R²: 0.953911, MAE: 0.013321
+Save model
+MSE: 0.000381, R²: 0.941712, MAE: 0.015117
+Save model
+MSE: 0.000446, R²: 0.936786, MAE: 0.016839
+Save model
+MSE: 0.000385, R²: 0.945235, MAE: 0.015006
+Save model
+MSE: 0.000339, R²: 0.948192, MAE: 0.013988
+Save model
+MSE: 0.000393, R²: 0.940299, MAE: 0.015813
+Save model
+MSE: 0.000485, R²: 0.924445, MAE: 0.017471
+Save model
+MSE: 0.000278, R²: 0.959555, MAE: 0.012620
+Save model
+MSE: 0.000369, R²: 0.945427, MAE: 0.015165
+Save model
+MSE: 0.000200, R²: 0.970661, MAE: 0.010708
+Save model
+MSE: 0.000194, R²: 0.971661, MAE: 0.010487
+Save model
+MSE: 0.000190, R²: 0.972147, MAE: 0.010371
+Save model
+MSE: 0.000190, R²: 0.972247, MAE: 0.010338
+Save model
+MSE: 0.000191, R²: 0.972155, MAE: 0.010352
+Save model
+MSE: 0.000192, R²: 0.971943, MAE: 0.010382
+Save model
+MSE: 0.000193, R²: 0.971829, MAE: 0.010392
+Save model
+MSE: 0.000194, R²: 0.971664, MAE: 0.010414
+Save model
+MSE: 0.000195, R²: 0.971683, MAE: 0.010404
+Save model
+MSE: 0.000194, R²: 0.971756, MAE: 0.010378
+Save model
+MSE: 0.000195, R²: 0.971644, MAE: 0.010401
+Save model
+MSE: 0.000197, R²: 0.971521, MAE: 0.010432
+Save model
+MSE: 0.000200, R²: 0.971275, MAE: 0.010485
+Save model
+MSE: 0.000201, R²: 0.971134, MAE: 0.010525
+Save model
+MSE: 0.000203, R²: 0.970942, MAE: 0.010572
+Save model
+MSE: 0.000205, R²: 0.970842, MAE: 0.010584
+Save model
+MSE: 0.000206, R²: 0.970654, MAE: 0.010620
+Save model
+MSE: 0.000207, R²: 0.970543, MAE: 0.010632
+Save model
+MSE: 0.000208, R²: 0.970420, MAE: 0.010641
+Save model
+MSE: 0.000209, R²: 0.970224, MAE: 0.010659
+Final evaluation done. MSE: 0.000209, R²: 0.970224, MAE: 0.010659
+Save model
+Training time: 2166.3283410072327 seconds
+MSE: 0.000209, R²: 0.970224, MAE: 0.010659
+Save model
+Inference time: 22.42173719406128 seconds.
+---------------------------------
