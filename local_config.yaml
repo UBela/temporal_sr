@@ -20,7 +20,7 @@ TrainingConfig:
   model_path: /home/bela/thesis/temporal_sr/EDSR/model
   num_train_epochs: 10
   out_channels: 2
-  output_dir: /home/bela/thesis/temporal_sr/EDSR/output
+  output_dir: /home/bela/thesis/preds
   patch_size: 32
   preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
   scaling_factor: 2
@@ -30,8 +30,8 @@ TrainingConfig:
   std_tp: 0.0001541570818517357
   std_u10: 0.08211711049079895
   std_v10: 0.07824576646089554
-  test_end_date: '1983-12-31'
-  test_start_date: '1983-01-01'
+  test_end_date: '1984-12-31'
+  test_start_date: '1984-01-01'
   train_batch_size: 16
   train_end_date: '1982-12-31'
   train_start_date: '1980-01-01'
