@@ -57,6 +57,7 @@ class CustomTrainer(Trainer):
         super().__init__(model, args, train_dataset, eval_dataset)
         self.train_losses = []
         self.eval_mses = []
+        self.eval_maes = []
     def initialize_dataloader(self):
         if self.train_dataset is None:
             raise ValueError('train_dataset is not defined.')
@@ -98,8 +99,7 @@ class CustomTrainer(Trainer):
         train_batch_size = args.train_batch_size
         step_size = int(len(train_dataset) / train_batch_size * 200)
         n_gpu = args.n_gpu
-        sum_loss = 0
-        total_len = 0
+        
         
         if n_gpu  > 1:
             self.model = nn.DataParallel(self.model)
@@ -139,7 +139,9 @@ class CustomTrainer(Trainer):
                     t.update(len(lr_patches))
                     
                 self.train_losses.append(epoch_losses.avg)   
-                eval_mse = self.eval(epoch) 
+                eval_mae, eval_mse = self.eval(epoch) 
+                
+                self.eval_maes.append(eval_mae)
                 self.eval_mses.append(eval_mse)
 
     def denormalize(self, data):
@@ -151,12 +153,16 @@ class CustomTrainer(Trainer):
     def calc_mse(self, pred, label):
         return torch.mean((pred - label) ** 2)
     
+    def calc_mae(self, pred, label):
+        return torch.mean(torch.abs(pred - label))
+    
     
     def eval(self, epoch):
         args = self.args
         sr_patches = []
         eval_step = 0
         total_mse = 0
+        total_mae = 0
         num_train_epochs = config.num_train_epochs
         scale = self.model.module.config.scale if isinstance(self.model, nn.DataParallel) else config.scaling_factor
 
@@ -203,48 +209,62 @@ class CustomTrainer(Trainer):
             
             
             total_mse += self.calc_mse(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
-        
+            total_mae += self.calc_mae(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
         preds_tensor = torch.stack(sr_patches)
-        torch.save(preds_tensor, f'{config.preds_dir}/output_1985_{scale}x.pt')
+        year = config.test_end_date.split('-')[0]
+        torch.save(preds_tensor, f'{config.preds_dir}/EDSR_{year}_{scale}x.pt')
 
         total_mse /= len(eval_dataloader)
+        total_mae /= len(eval_dataloader)
         #to tensor
         all_preds = torch.cat(all_preds)
         all_labels = torch.cat(all_labels)
         
         r2 = r2_score(all_labels, all_preds).item()
-        print(f'MSE: {total_mse:.4f}, R²: {r2:.4f}')
+        print(f'MSE: {total_mse:.6f}, R²: {r2:.6f}, MAE: {total_mae:.6f}')
 
         if epoch == num_train_epochs - 1:
-            print(f'Final evaluation done. MSE: {total_mse:.4f}, R²: {r2:.4f}')
+            print(f'Final evaluation done. MSE: {total_mse:.6f}, R²: {r2:.6f}, MAE: {total_mae:.6f}')
 
         print('Save model')
         self.save_model(output_dir=config.model_path)
-        return total_mse
+        return total_mae, total_mse
     
     def plot_metrics(self):
         epochs = range(len(self.train_losses))
-        self.train_losses = np.log(self.train_losses)
-        self.eval_mses = np.log(self.eval_mses)
-        plt.figure(figsize=(12, 5))
+
+        train_losses_log = torch.log(torch.tensor(self.train_losses))
+        eval_mses_log = torch.log(torch.tensor(self.eval_mses))
+        eval_maes_log = torch.log(torch.tensor(self.eval_maes))
+
+        plt.figure(figsize=(18, 5))
 
         # Plot training loss
-        plt.subplot(1, 2, 1)
-        plt.plot(epochs, self.train_losses, label="Training Loss")
+        plt.subplot(1, 3, 1)
+        plt.plot(epochs, train_losses_log, label="Training Loss")
         plt.xlabel("Epoch")
         plt.ylabel("Log L1 Loss")
         plt.title("Training Loss Over Epochs")
         plt.legend()
 
         # Plot evaluation MSE
-        plt.subplot(1, 2, 2)
-        plt.plot(epochs, self.eval_mses, label="Evaluation MSE", color="orange")
+        plt.subplot(1, 3, 2)
+        plt.plot(epochs, eval_mses_log, label="Evaluation MSE", color="orange")
         plt.xlabel("Epoch")
         plt.ylabel("Log MSE")
         plt.title("Evaluation MSE Over Epochs")
         plt.legend()
 
-        plt.savefig(f'{config.output_dir}/training_loss_eval_mse.png')
+        # Plot evaluation MAE
+        plt.subplot(1, 3, 3)
+        plt.plot(epochs, eval_maes_log, label="Evaluation MAE", color="green")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log MAE")
+        plt.title("Evaluation MAE Over Epochs")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.savefig(f'{config.output_dir}/training_eval_metrics_{config.scaling_factor}x.png')
         plt.close()
 
 if __name__ == '__main__':

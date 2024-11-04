@@ -1,0 +1,210 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+Total number of parameters: 1371010
+Training arguments: TrainingArguments(output_dir='/mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output', overwrite_output_dir=False, learning_rate=0.0001, gamma=0.5, num_train_epochs=100, save_steps=500, save_total_limit=None, no_cuda=False, seed=123, fp16=False, per_device_train_batch_size=32, local_rank=-1, dataloader_num_workers=0, dataloader_pin_memory=True)
+MSE: 3.756655, R²: -1.535528
+Save model
+MSE: 0.497712, R²: -0.557370
+Save model
+MSE: 0.138511, R²: -0.157230
+Save model
+MSE: 0.073300, R²: -0.145887
+Save model
+MSE: 0.046284, R²: -0.187256
+Save model
+MSE: 0.033037, R²: -0.263871
+Save model
+MSE: 0.025621, R²: -0.363628
+Save model
+MSE: 0.021234, R²: -0.470036
+Save model
+MSE: 0.018399, R²: -0.575134
+Save model
+MSE: 0.016523, R²: -0.679827
+Save model
+MSE: 0.015173, R²: -0.775497
+Save model
+MSE: 0.014201, R²: -0.861893
+Save model
+MSE: 0.013537, R²: -0.937884
+Save model
+MSE: 0.013078, R²: -1.003091
+Save model
+MSE: 0.012769, R²: -1.068471
+Save model
+MSE: 0.012617, R²: -1.131834
+Save model
+MSE: 0.012517, R²: -1.176343
+Save model
+MSE: 0.012431, R²: -1.197149
+Save model
+MSE: 0.012346, R²: -1.206722
+Save model
+MSE: 0.012363, R²: -1.209743
+Save model
+MSE: 0.012365, R²: -1.196499
+Save model
+MSE: 0.012429, R²: -1.234414
+Save model
+MSE: 0.012691, R²: -1.270402
+Save model
+MSE: 0.012908, R²: -1.274595
+Save model
+MSE: 0.013112, R²: -1.225682
+Save model
+MSE: 0.013577, R²: -1.121055
+Save model
+MSE: 0.013694, R²: -1.061315
+Save model
+MSE: 0.013522, R²: -1.027439
+Save model
+MSE: 0.013489, R²: -1.003451
+Save model
+MSE: 0.014213, R²: -0.909569
+Save model
+MSE: 0.013696, R²: -0.939023
+Save model
+MSE: 0.013634, R²: -0.971329
+Save model
+MSE: 0.013318, R²: -1.006355
+Save model
+MSE: 0.013240, R²: -0.952658
+Save model
+MSE: 0.012910, R²: -0.877829
+Save model
+MSE: 0.013412, R²: -0.882214
+Save model
+MSE: 0.013283, R²: -0.963671
+Save model
+MSE: 0.013471, R²: -0.962147
+Save model
+MSE: 0.014193, R²: -0.857625
+Save model
+MSE: 0.013140, R²: -0.886979
+Save model
+MSE: 0.013290, R²: -0.894670
+Save model
+MSE: 0.013643, R²: -0.872985
+Save model
+MSE: 0.013124, R²: -0.901850
+Save model
+MSE: 0.014594, R²: -0.766412
+Save model
+MSE: 0.012989, R²: -0.923510
+Save model
+MSE: 0.013635, R²: -0.829639
+Save model
+MSE: 0.014626, R²: -0.764295
+Save model
+MSE: 0.013807, R²: -0.865251
+Save model
+MSE: 0.014811, R²: -0.722708
+Save model
+MSE: 0.013378, R²: -0.887951
+Save model
+MSE: 0.013067, R²: -0.919310
+Save model
+MSE: 0.014920, R²: -0.760301
+Save model
+MSE: 0.015593, R²: -0.652390
+Save model
+MSE: 0.014136, R²: -0.803298
+Save model
+MSE: 0.014641, R²: -0.786431
+Save model
+MSE: 0.015349, R²: -0.714939
+Save model
+MSE: 0.015354, R²: -0.727539
+Save model
+MSE: 0.014633, R²: -0.807554
+Save model
+MSE: 0.014930, R²: -0.790722
+Save model
+MSE: 0.014149, R²: -0.839162
+Save model
+MSE: 0.014228, R²: -0.844418
+Save model
+MSE: 0.016324, R²: -0.680165
+Save model
+MSE: 0.014292, R²: -0.838887
+Save model
+MSE: 0.014986, R²: -0.762411
+Save model
+MSE: 0.014408, R²: -0.808700
+Save model
+MSE: 0.014611, R²: -0.797003
+Save model
+MSE: 0.015242, R²: -0.757027
+Save model
+MSE: 0.014459, R²: -0.815921
+Save model
+MSE: 0.015084, R²: -0.761584
+Save model
+MSE: 0.014789, R²: -0.760148
+Save model
+MSE: 0.014767, R²: -0.782981
+Save model
+MSE: 0.014550, R²: -0.813714
+Save model
+MSE: 0.013637, R²: -0.873339
+Save model
+MSE: 0.014258, R²: -0.832161
+Save model
+MSE: 0.014511, R²: -0.779563
+Save model
+MSE: 0.013794, R²: -0.860337
+Save model
+MSE: 0.014063, R²: -0.820593
+Save model
+MSE: 0.014527, R²: -0.799012
+Save model
+MSE: 0.014106, R²: -0.818704
+Save model
+MSE: 0.014035, R²: -0.820584
+Save model
+MSE: 0.013429, R²: -0.909613
+Save model
+MSE: 0.013476, R²: -0.906853
+Save model
+MSE: 0.013487, R²: -0.905012
+Save model
+MSE: 0.013498, R²: -0.903348
+Save model
+MSE: 0.013502, R²: -0.901993
+Save model
+MSE: 0.013512, R²: -0.900562
+Save model
+MSE: 0.013512, R²: -0.900167
+Save model
+MSE: 0.013513, R²: -0.900125
+Save model
+MSE: 0.013508, R²: -0.901014
+Save model
+MSE: 0.013509, R²: -0.901785
+Save model
+MSE: 0.013501, R²: -0.902982
+Save model
+MSE: 0.013494, R²: -0.904462
+Save model
+MSE: 0.013495, R²: -0.905900
+Save model
+MSE: 0.013497, R²: -0.908128
+Save model
+MSE: 0.013500, R²: -0.909311
+Save model
+MSE: 0.013505, R²: -0.909961
+Save model
+MSE: 0.013510, R²: -0.910468
+Save model
+MSE: 0.013511, R²: -0.911140
+Save model
+MSE: 0.013487, R²: -0.915090
+Save model
+MSE: 0.013469, R²: -0.917165
+Final evaluation done. MSE: 0.013469, R²: -0.917165
+Save model
+Training time: 2808.8262577056885 seconds
+MSE: 0.013469, R²: -0.917165
+Save model
+Inference time: 12.951111555099487 seconds.
+---------------------------------
