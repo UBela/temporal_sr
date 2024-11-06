@@ -30,9 +30,7 @@ TRAIN_START = config.train_start_date
 TRAIN_END = config.train_end_date
 TEST_START = config.test_start_date
 TEST_END = config.test_end_date
-means = [config.mean_u10, config.mean_v10, 
-         config.mean_d2m, config.mean_t2m,
-         config.mean_msl, config.mean_tp]
+means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
 def load_dataset(data, start, end, patch_size):
     dataset = xr.open_dataset(data).sel(valid_time=slice(start, end)).isel(
         longitude=slice(0, patch_size), latitude=slice(0, patch_size))
@@ -52,7 +50,8 @@ def rescale_data(data, custom_scale = None):
             returned_scale[var] = {'min': min_val, 'max': max_val}
             
             
-        data[var] = (data[var] - min_val) / (max_val - min_val)
+        # Rescale to the target range [0, 1]
+        data[var] = (data[var] - min_val) / (max_val - min_val)  
         
         
     return data, returned_scale
@@ -100,6 +99,9 @@ class SuperresDataset(Dataset):
         self.hr_data = dataset
         self.scale = scaling_factor
         self.features = features
+        self.transforms = transforms.Compose([
+            transforms.Normalize(mean=means, std=[1.0]*len(means))
+        ])
     def __len__(self):
         return len(self.hr_data['valid_time'].values)
 
@@ -114,10 +116,13 @@ class SuperresDataset(Dataset):
 
             lr_patches.append(torch.tensor(lr_patch, dtype=torch.float32))
             hr_patches.append(torch.tensor(hr_patch, dtype=torch.float32))
+            
 
         hr_patches = torch.stack(hr_patches, axis=0)
         lr_patches = torch.stack(lr_patches, axis=0)
-        
+        hr_patches = self.transforms(hr_patches)
+        lr_patches = self.transforms(lr_patches)
+        # only return u10 and v10 of hr_patches
         
         return lr_patches, hr_patches[:2, :, :]
 
@@ -127,7 +132,9 @@ def initialize_dataset(config):
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
     train_data, train_scale = rescale_data(train_data)
-    test_data, _ = rescale_data(test_data, train_scale)
+    test_data, _ = rescale_data(test_data, custom_scale=train_scale)
+    # print range of train and test data
+    print("Train data range")
     print(train_scale)
     
     train_dataset = SuperresDataset(train_data)
