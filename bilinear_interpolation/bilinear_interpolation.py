@@ -9,7 +9,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from process_data import load_dataset, normalize_data
+from process_data import load_dataset, rescale_data
 
 
 def load_config(file_path):
@@ -48,8 +48,8 @@ def main(config):
     train_data = load_dataset(config.data_path, config.train_start_date, config.train_end_date, config.patch_size)
     test_data = load_dataset(config.data_path, config.test_start_date, config.test_end_date, config.patch_size)
     
-    _, train_scale = normalize_data(train_data, custom_scale=None)
-    test_data, _ = normalize_data(test_data, custom_scale=train_scale)
+    _, train_scale = rescale_data(train_data, custom_scale=None)
+    test_data, _ = rescale_data(test_data, custom_scale=train_scale)
     
     test_tensor = torch.stack([torch.tensor(test_data[var].values) for var in ['u10', 'v10']], dim=1)
     #print(test_tensor.shape)
