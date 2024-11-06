@@ -1,0 +1,11 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+Train data range after scaling:
+u10: min=0.0000, max=1.0000
+v10: min=0.0000, max=1.0000
+d2m: min=0.0000, max=1.0000
+t2m: min=0.0000, max=1.0000
+msl: min=0.0000, max=1.0000
+tp: min=0.0000, max=1.0000
+{'u10': {'min': np.float32(-15.279355), 'max': np.float32(24.534174)}, 'v10': {'min': np.float32(-16.699005), 'max': np.float32(21.35775)}, 'd2m': {'min': np.float32(245.78934), 'max': np.float32(296.0891)}, 't2m': {'min': np.float32(248.4476), 'max': np.float32(306.05835)}, 'msl': {'min': np.float32(96446.56), 'max': np.float32(104656.41)}, 'tp': {'min': np.float32(0.0), 'max': np.float32(0.01362586)}}
+---------------------------------

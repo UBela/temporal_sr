@@ -1,0 +1,18 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+Train data range after scaling:
+u10: min=0.0000, max=1.0000
+v10: min=0.0000, max=1.0000
+d2m: min=0.0000, max=1.0000
+t2m: min=0.0000, max=1.0000
+msl: min=0.0000, max=1.0000
+tp: min=0.0000, max=1.0000
+{'u10': {'min': np.float32(-15.279355), 'max': np.float32(24.534174)}, 'v10': {'min': np.float32(-16.699005), 'max': np.float32(21.35775)}, 'd2m': {'min': np.float32(245.78934), 'max': np.float32(296.0891)}, 't2m': {'min': np.float32(248.4476), 'max': np.float32(306.05835)}, 'msl': {'min': np.float32(96446.56), 'max': np.float32(104656.41)}, 'tp': {'min': np.float32(0.0), 'max': np.float32(0.01362586)}}
+Max of pred_features 0,0,:,: 0.9714811444282532
+Min of pred_features 0,0,:,: -0.9714423418045044
+Max of pred_features 0,1,:,: 0.974380373954773
+Min of pred_features 0,1,:,: -0.9806037545204163
+MSE: 0.000207, R²: 0.969286, MAE: 0.010526
+Save model
+Inference time: 17.163166046142578 seconds.
+---------------------------------

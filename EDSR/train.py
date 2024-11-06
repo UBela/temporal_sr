@@ -122,12 +122,8 @@ class CustomTrainer(Trainer):
                     
                     preds = self.model(lr_patches)
                     criterion = nn.L1Loss()
-                    pred_u_10, _pred_v_10 = preds[:, 0, :, :], preds[:, 1, :, :]
-                    label_u_10, label_v_10 = hr_patches[:, 0, :, :], hr_patches[:, 1, :, :]
-                    pred_wind_speed = self.get_wind_speed(pred_u_10, _pred_v_10)
-                    label_wind_speed = self.get_wind_speed(label_u_10, label_v_10)
                     
-                    loss = criterion(pred_wind_speed, label_wind_speed)
+                    loss = criterion(preds, hr_patches)
                     epoch_losses.update(loss.item(), len(lr_patches))
 
                     optimizer.zero_grad()
@@ -182,11 +178,10 @@ class CustomTrainer(Trainer):
             
             with torch.no_grad():
                 pred = self.model(lr_patches)
-            #pred_features = self.denormalize(pred)            
-            #label_features = self.denormalize(hr_patches)
-            pred_features = pred
-            label_features = hr_patches
+            pred_features = self.denormalize(pred)            
+            label_features = self.denormalize(hr_patches)
             if eval_step <= 1:
+               
                 # Plotting
                 fix, ax = plt.subplots(1, 3, figsize=(15, 5))
                 ax[0].imshow(lr_patches[0, 0, :, :].cpu().numpy(), cmap='inferno')
