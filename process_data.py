@@ -30,7 +30,10 @@ TRAIN_START = config.train_start_date
 TRAIN_END = config.train_end_date
 TEST_START = config.test_start_date
 TEST_END = config.test_end_date
+n_in_features = config.in_channels
 means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
+FEATURE_LIST = FEATURE_LIST[:n_in_features]
+means = means[:n_in_features]
 def load_dataset(data, start, end, patch_size):
     dataset = xr.open_dataset(data).sel(valid_time=slice(start, end)).isel(
         longitude=slice(0, patch_size), latitude=slice(0, patch_size))
@@ -122,12 +125,11 @@ class SuperresDataset(Dataset):
         lr_patches = torch.stack(lr_patches, axis=0)
         hr_patches = self.transforms(hr_patches)
         lr_patches = self.transforms(lr_patches)
-        # only return u10 and v10 of hr_patches
         
         return lr_patches, hr_patches[:2, :, :]
 
 def initialize_dataset(config):
-    data = load_dataset(DATA_PATH, config.train_start_date, config.test_end_date, PATCH_SIZE)
+    data = load_dataset(DATA_PATH, TRAIN_START, TEST_END, PATCH_SIZE)
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
