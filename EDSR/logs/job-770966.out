@@ -1,0 +1,42 @@
+-------- PYTHON OUTPUT ----------
+Device: cuda:0
+Train data range after scaling:
+u10: min=-1.0000, max=1.0000
+v10: min=-1.0000, max=1.0000
+d2m: min=-1.0000, max=1.0000
+t2m: min=-1.0000, max=1.0000
+msl: min=-1.0000, max=1.0000
+tp: min=-1.0000, max=1.0000
+{'u10': {'min': np.float32(-15.279355), 'max': np.float32(24.534174)}, 'v10': {'min': np.float32(-16.699005), 'max': np.float32(21.35775)}, 'd2m': {'min': np.float32(245.78934), 'max': np.float32(296.0891)}, 't2m': {'min': np.float32(248.4476), 'max': np.float32(306.05835)}, 'msl': {'min': np.float32(96446.56), 'max': np.float32(104656.41)}, 'tp': {'min': np.float32(0.0), 'max': np.float32(0.01362586)}}
+Total number of parameters: 1516418
+Training arguments: TrainingArguments(output_dir='/mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output', overwrite_output_dir=False, learning_rate=0.0001, gamma=0.5, num_train_epochs=100, save_steps=500, save_total_limit=None, no_cuda=False, seed=123, fp16=False, per_device_train_batch_size=16, local_rank=-1, dataloader_num_workers=0, dataloader_pin_memory=True)
+Max of pred u10 2.077615737915039
+Min of pred u10 -1.0907959938049316
+Max of label u10 0.2204524278640747
+Min of label u10 -0.13786056637763977
+MSE: 0.958492, R²: -1.898734, MAE: 0.800702
+Save model
+Max of pred u10 1.6146780252456665
+Min of pred u10 -1.0099687576293945
+Max of label u10 0.2204524278640747
+Min of label u10 -0.13786056637763977
+MSE: 0.671581, R²: -2.081020, MAE: 0.687670
+Save model
+Max of pred u10 1.458438515663147
+Min of pred u10 -0.629859447479248
+Max of label u10 0.2204524278640747
+Min of label u10 -0.13786056637763977
+MSE: 0.645314, R²: -2.186198, MAE: 0.682852
+Save model
+Max of pred u10 1.3906691074371338
+Min of pred u10 -0.585840106010437
+Max of label u10 0.2204524278640747
+Min of label u10 -0.13786056637763977
+MSE: 0.640981, R²: -2.281348, MAE: 0.684011
+Save model
+Max of pred u10 1.3588017225265503
+Min of pred u10 -0.5146962404251099
+Max of label u10 0.2204524278640747
+Min of label u10 -0.13786056637763977
+MSE: 0.634576, R²: -2.313525, MAE: 0.680716
+Save model

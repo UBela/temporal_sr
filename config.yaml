@@ -23,16 +23,16 @@ TrainingConfig:
   output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output
   patch_size: 32
   preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/preds
-  scaling_factor: 4
+  scaling_factor: 2
   std_d2m: 0.2310042679309845
   std_msl: 0.23173673450946808
   std_t2m: 0.24237702786922455
   std_tp: 0.24947123229503632
   std_u10: 0.22365671396255493
   std_v10: 0.24354858696460724
-  test_end_date: '1984-12-31'
-  test_start_date: '1984-01-01'
-  train_batch_size: 32
+  test_end_date: '1983-12-31'
+  test_start_date: '1983-01-01'
+  train_batch_size: 16
   train_end_date: '1982-12-31'
   train_start_date: '1980-01-01'
-  pretraining: False
+  pretraining: True
