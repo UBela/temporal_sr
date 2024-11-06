@@ -58,6 +58,10 @@ class CustomTrainer(Trainer):
         self.train_losses = []
         self.eval_mses = []
         self.eval_maes = []
+        self.eval_r2 = []
+        self.best_eval_mse = float('inf')
+        self.best_eval_mae = float('inf')
+        self.best_r2 = 0.0
     def initialize_dataloader(self):
         if self.train_dataset is None:
             raise ValueError('train_dataset is not defined.')
@@ -135,10 +139,24 @@ class CustomTrainer(Trainer):
                     t.update(len(lr_patches))
                     
                 self.train_losses.append(epoch_losses.avg)   
-                eval_mae, eval_mse = self.eval(epoch) 
+                eval_mae, eval_mse, eval_r2 = self.eval(epoch) 
                 
                 self.eval_maes.append(eval_mae)
                 self.eval_mses.append(eval_mse)
+                
+                if (eval_mae < self.best_eval_mae or
+                    eval_mse < self.best_eval_mse or
+                    eval_r2 > self.best_eval_r2):
+                    print("Improvement detected. Saving model...")
+                    self.save_model(output_dir=config.model_path)
+                    self.best_eval_mae = min(eval_mae, self.best_eval_mae)
+                    self.best_eval_mse = min(eval_mse, self.best_eval_mse)
+                    self.best_eval_r2 = max(eval_r2, self.best_eval_r2)
+                
+                self.eval_maes.append(eval_mae)
+                self.eval_mses.append(eval_mse)
+                self.eval_r2s.append(eval_r2)
+                
 
     def denormalize(self, data):
         for i in range(data.shape[1]):
@@ -221,9 +239,7 @@ class CustomTrainer(Trainer):
         if epoch == num_train_epochs - 1:
             print(f'Final evaluation done. MSE: {total_mse:.6f}, R²: {r2:.6f}, MAE: {total_mae:.6f}')
 
-        print('Save model')
-        self.save_model(output_dir=config.model_path)
-        return total_mae, total_mse
+        return total_mae, total_mse, r2
     
     def plot_metrics(self):
         epochs = range(len(self.train_losses))
