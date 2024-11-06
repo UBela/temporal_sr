@@ -261,36 +261,3 @@ class CustomTrainer(Trainer):
         plt.tight_layout()
         plt.savefig(f'{config.output_dir}/training_eval_metrics_{config.scaling_factor}x.png')
         plt.close()
-
-if __name__ == '__main__':
-    
-    num_channels = 6
-    hr_height, hr_width = 32, 32
-
-    train_dataset = []
-    eval_dataset = []
-    
-    for _ in range(10):
-        hr_sample = torch.rand(num_channels, hr_height, hr_width)
-        lr_sample = nn.AvgPool2d(2)(hr_sample.unsqueeze(0)).squeeze(0)
-        hr_sample = hr_sample[:2,:,:] # only u and v component
-        train_dataset.append((lr_sample, hr_sample))
-        eval_dataset.append((lr_sample, hr_sample))
-    
-    from model import EDSRModel  
-    model = EDSRModel(
-        in_channels=config.in_channels,
-        out_channels=config.out_channels,
-        feature_channels=config.feature_channels,
-        scaling_factor=config.scaling_factor
-    )
-    model = model.to(DEVICE)
-    
-    trainer = CustomTrainer(model=model, args=None, train_dataset=train_dataset, eval_dataset=eval_dataset)
-
-    train_start_time = time.time()
-    trainer.train()
-    train_end_time = time.time()
-    print("Model training time: {} seconds".format(train_end_time - train_start_time))
-    
-    
