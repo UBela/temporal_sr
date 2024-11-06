@@ -139,9 +139,6 @@ class CustomTrainer(Trainer):
                 self.train_losses.append(epoch_losses.avg)   
                 eval_mae, eval_mse, eval_r2 = self.eval(epoch) 
                 
-                self.eval_maes.append(eval_mae)
-                self.eval_mses.append(eval_mse)
-                
                 if (eval_mae < self.best_eval_mae or
                     eval_mse < self.best_eval_mse or
                     eval_r2 > self.best_eval_r2):
