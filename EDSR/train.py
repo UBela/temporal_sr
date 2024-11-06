@@ -61,7 +61,7 @@ class CustomTrainer(Trainer):
         self.eval_r2 = []
         self.best_eval_mse = float('inf')
         self.best_eval_mae = float('inf')
-        self.best_r2 = 0.0
+        self.best_eval_r2 = 0.0
     def initialize_dataloader(self):
         if self.train_dataset is None:
             raise ValueError('train_dataset is not defined.')
