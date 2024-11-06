@@ -10,6 +10,10 @@ __pycache__/
 # PyTorch model files
 *.pt
 # Distribution / packaging
+# Logfiles
+*.out
+*.err
+
 .Python
 build/
 develop-eggs/
