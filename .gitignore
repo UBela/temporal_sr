@@ -9,10 +9,12 @@ __pycache__/
 *.png
 # PyTorch model files
 *.pt
-# Distribution / packaging
 # Logfiles
 *.out
 *.err
+
+
+# Distribution / packaging
 
 .Python
 build/
