@@ -7,11 +7,9 @@ from tqdm.auto import tqdm
 import yaml
 import argparse
 from box import Box
-import time
 import matplotlib.pyplot as plt
 from torcheval.metrics.functional import r2_score 
 from typing import Optional, Union
-import numpy as np
 
 
 def load_config(file_path):
@@ -58,7 +56,7 @@ class CustomTrainer(Trainer):
         self.train_losses = []
         self.eval_mses = []
         self.eval_maes = []
-        self.eval_r2 = []
+        self.eval_r2s = []
         self.best_eval_mse = float('inf')
         self.best_eval_mae = float('inf')
         self.best_eval_r2 = 0.0

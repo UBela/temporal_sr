@@ -3,9 +3,6 @@ import xarray as xr
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
-from sklearn.preprocessing import MinMaxScaler
-import os
-from PIL import Image
 import yaml
 from box import Box
 import argparse
@@ -145,10 +142,4 @@ def initialize_dataset(config):
    
     return train_dataset, test_dataset
 
-if __name__ == '__main__':
-    train_set, test_set = initialize_dataset(config)
-    print(len(train_set), len(test_set))
-    hr, lr = train_set[0]
-    hr2, lr2 = train_set[1]
-    print(hr.shape, lr.shape)
 
