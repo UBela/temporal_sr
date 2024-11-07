@@ -24,12 +24,12 @@ args = parser.parse_args()
 # Load and box the configuration
 config = Box(load_config(args.config_path)['TrainingConfig'])
 
-def bilinear_interpolation(lr_patch, scaling_factor):
+def bicubic_interpolation(lr_patch, scaling_factor):
     lr_patch = lr_patch.permute(1, 2, 0).numpy()
     sr_patch = cv2.resize(lr_patch, 
                         dsize=(lr_patch.shape[1] * scaling_factor, 
                         lr_patch.shape[0] * scaling_factor), 
-                        interpolation=cv2.INTER_LINEAR)
+                        interpolation=cv2.INTER_CUBIC)
     sr_patch = torch.tensor(sr_patch).unsqueeze(2).permute(2, 0, 1)
     return sr_patch
 
@@ -71,8 +71,8 @@ def main(config):
             stride=config.scaling_factor
         ).squeeze(0) 
 
-        sr_u10 = bilinear_interpolation(lr_u10, config.scaling_factor)
-        sr_v10 = bilinear_interpolation(lr_v10, config.scaling_factor)
+        sr_u10 = bicubic_interpolation(lr_u10, config.scaling_factor)
+        sr_v10 = bicubic_interpolation(lr_v10, config.scaling_factor)
 
         sr_wind_speed = torch.sqrt(sr_u10 ** 2 + sr_v10 ** 2)
         
