@@ -39,21 +39,23 @@ def mse_loss(sr_patch, hr_patch):
     return torch.mean((sr_patch - hr_patch) ** 2)
 
 
-def main(config):
+def main(config, test_year):
     mse = 0.0
     mae = 0.0
     output = []
     hr_images = []
     sr_images = []
+    test_start_date = f'{test_year}-01-01'
+    test_end_date = f'{test_year}-12-31'
     train_data = load_dataset(config.data_path, config.train_start_date, config.train_end_date, config.patch_size)
-    test_data = load_dataset(config.data_path, config.test_start_date, config.test_end_date, config.patch_size)
+    test_data = load_dataset(config.data_path, test_start_date, test_end_date, config.patch_size)
     
     _, train_scale = rescale_data(train_data, custom_scale=None)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)
     
     test_tensor = torch.stack([torch.tensor(test_data[var].values) for var in ['u10', 'v10']], dim=1)
     #print(test_tensor.shape)
-    
+    print(f'Loaded test data for {test_year}')
     for i in range(test_tensor.shape[0]):
         u10 = test_tensor[i, 0, :, :]
         v10 = test_tensor[i, 1, :, :]
@@ -87,10 +89,8 @@ def main(config):
     mse /= test_tensor.shape[0]
     mae /= test_tensor.shape[0]
     r2 = r2_score(torch.cat(sr_images), torch.cat(hr_images))
-    year = config.test_end_date.split('-')[0]
-    print(torch.stack(output, dim=0).shape)
     # Save the output tensor with shape (n, 2, 32, 32)
-    torch.save(torch.stack(output), f'{config.output_dir}/baseline_{year}_{config.scaling_factor}x.pt')
+    torch.save(torch.stack(output), f'{config.output_dir}/baseline_{test_year}_{config.scaling_factor}x.pt')
     print(f'MSE: {mse:.6f}, MAE: {mae:.6f}, R²: {r2:.6f}')
 
 
@@ -99,4 +99,6 @@ def main(config):
 
     
 if __name__ == "__main__":
-    main(config)
+    for year in range(1984, 2024):
+        main(config, year)
+    

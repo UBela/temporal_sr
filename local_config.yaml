@@ -1,6 +1,6 @@
 TrainingConfig:
   config_path: /home/bela/thesis/temporal_sr/local_config.yaml
-  data_path: /home/bela/thesis/data/merged_era5_4h.nc
+  data_path: /home/bela/thesis/data/all_years_merged_era5.nc
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -23,7 +23,7 @@ TrainingConfig:
   output_dir: /home/bela/thesis/preds
   patch_size: 32
   preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
-  scaling_factor: 2
+  scaling_factor: 4
   std_d2m: 1.780206561088562
   std_msl: 463.9028625488281
   std_t2m: 1.826715350151062
