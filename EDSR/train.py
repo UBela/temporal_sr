@@ -21,10 +21,8 @@ parser = argparse.ArgumentParser(description='Run model training with configurat
 parser.add_argument('config_path', type=str, help='Path to the configuration yaml file.')
 args = parser.parse_args()
 
-# Load and box the configuration
 config = Box(load_config(args.config_path)['TrainingConfig'])
 
-# Constants
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
@@ -45,7 +43,6 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
         
         
-# Extract means and stds from the configuration
 means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
 stds = [config.std_u10, config.std_v10, config.std_d2m, config.std_t2m, config.std_msl, config.std_tp]
 
@@ -60,6 +57,8 @@ class CustomTrainer(Trainer):
         self.best_eval_mse = float('inf')
         self.best_eval_mae = float('inf')
         self.best_eval_r2 = 0.0
+        
+        
     def initialize_dataloader(self):
         if self.train_dataset is None:
             raise ValueError('train_dataset is not defined.')
@@ -166,7 +165,7 @@ class CustomTrainer(Trainer):
         return torch.mean(torch.abs(pred - label))
     
     
-    def eval(self, epoch):
+    def eval(self, epoch, test_year):
         args = self.args
         sr_patches = []
         eval_step = 0
@@ -219,8 +218,9 @@ class CustomTrainer(Trainer):
             total_mse += self.calc_mse(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
             total_mae += self.calc_mae(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
         preds_tensor = torch.stack(sr_patches)
-        year = config.test_end_date.split('-')[0]
-        torch.save(preds_tensor, f'{config.preds_dir}/EDSR_{year}_{scale}x.pt')
+        
+        print(f'Saving predictions for year {test_year}...')
+        torch.save(preds_tensor, f'{config.preds_dir}/EDSR_{test_year}_{scale}x.pt')
 
         total_mse /= len(eval_dataloader)
         total_mae /= len(eval_dataloader)

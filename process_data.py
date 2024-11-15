@@ -25,8 +25,6 @@ PATCH_SIZE = config.patch_size
 FEATURE_LIST = config.feature_list
 TRAIN_START = config.train_start_date
 TRAIN_END = config.train_end_date
-TEST_START = config.test_start_date
-TEST_END = config.test_end_date
 n_in_features = config.in_channels
 means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
 FEATURE_LIST = FEATURE_LIST[:n_in_features]
@@ -125,7 +123,10 @@ class SuperresDataset(Dataset):
         
         return lr_patches, hr_patches[:2, :, :]
 
-def initialize_dataset(config):
+def initialize_dataset(config, test_year):
+    
+    TEST_START = f"{test_year}-01-01"
+    TEST_END = f"{test_year}-12-31"
     data = load_dataset(DATA_PATH, TRAIN_START, TEST_END, PATCH_SIZE)
     train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
@@ -133,8 +134,7 @@ def initialize_dataset(config):
     train_data, train_scale = rescale_data(train_data)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)
     # print range of train and test data
-    print("Train data range")
-    print(train_scale)
+    
     
     train_dataset = SuperresDataset(train_data)
     #save_means_stds(config.config_path, train_dataset, config.feature_list)
