@@ -30,8 +30,8 @@ TrainingConfig:
   std_tp: 0.24947123229503632
   std_u10: 0.22365671396255493
   std_v10: 0.24354858696460724
-  test_end_date: '2023-12-31'
-  test_start_date: '2023-01-01'
+  test_end_date: '1983-12-31'
+  test_start_date: '1983-01-01'
   test_year: 1983
   train_batch_size: 16
   train_end_date: '1982-12-31'
