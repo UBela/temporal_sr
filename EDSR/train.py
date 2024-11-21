@@ -135,8 +135,9 @@ class CustomTrainer(Trainer):
                     t.set_postfix(loss=f'{epoch_losses.avg:.6}')
                     t.update(len(lr_patches))
                     
-                self.train_losses.append(epoch_losses.avg)   
-                eval_mae, eval_mse, eval_r2 = self.eval(epoch) 
+                self.train_losses.append(epoch_losses.avg)
+                test_year = config.test_start_date.split('-')[0]   
+                eval_mae, eval_mse, eval_r2 = self.eval(epoch, test_year=test_year) 
                 
                 if (eval_mae < self.best_eval_mae or
                     eval_mse < self.best_eval_mse or
