@@ -43,8 +43,8 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
         
         
-means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
-stds = [config.std_u10, config.std_v10, config.std_d2m, config.std_t2m, config.std_msl, config.std_tp]
+means = [config.mean_u10, config.mean_v10, config.mean_t2m, config.mean_d2m, config.mean_msl, config.mean_tp]
+stds = [config.std_u10, config.std_v10, config.std_t2m, config.std_d2m, config.std_msl, config.std_tp]
 
 class CustomTrainer(Trainer):
     
@@ -208,15 +208,20 @@ class CustomTrainer(Trainer):
             
 
             sr_patches.append(pred_features.squeeze(0).to('cpu'))
+            """
             wind_speed_pred = self.get_wind_speed(pred_features[:, 0, :, :], pred_features[:, 1, :, :])
             wind_speed_label = self.get_wind_speed(label_features[:, 0, :, :], label_features[:, 1, :, :])
+            temp_pred = pred_features[:, 2, :, :]
+            temp_label = label_features[:, 2, :, :]
+            pred_features = torch.cat([wind_speed_pred, temp_pred], dim=1)
+            label_features = torch.cat([wind_speed_label, temp_label], dim=1)
+            """
+            all_preds.append(pred_features.view(-1))
+            all_labels.append(label_features.view(-1))
             
-            all_preds.append(wind_speed_pred.view(-1))
-            all_labels.append(wind_speed_label.view(-1))
             
-            
-            total_mse += self.calc_mse(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
-            total_mae += self.calc_mae(wind_speed_pred.to('cpu'), wind_speed_label.to('cpu')).item()
+            total_mse += self.calc_mse(pred_features.to('cpu'), label_features.to('cpu')).item()
+            total_mae += self.calc_mae(pred_features.to('cpu'), label_features.to('cpu')).item()
         preds_tensor = torch.stack(sr_patches)
         
         print(f'Saving predictions for year {test_year}...')
