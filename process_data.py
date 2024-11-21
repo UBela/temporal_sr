@@ -26,7 +26,7 @@ FEATURE_LIST = config.feature_list
 TRAIN_START = config.train_start_date
 TRAIN_END = config.train_end_date
 n_in_features = config.in_channels
-means = [config.mean_u10, config.mean_v10, config.mean_d2m, config.mean_t2m, config.mean_msl, config.mean_tp]
+means = [config.mean_u10, config.mean_v10, config.mean_t2m, config.mean_d2m, config.mean_msl, config.mean_tp]
 FEATURE_LIST = FEATURE_LIST[:n_in_features]
 means = means[:n_in_features]
 def load_dataset(data, start, end, patch_size):
@@ -121,7 +121,7 @@ class SuperresDataset(Dataset):
         hr_patches = self.transforms(hr_patches)
         lr_patches = self.transforms(lr_patches)
         
-        return lr_patches, hr_patches[:2, :, :]
+        return lr_patches, hr_patches
 
 def initialize_dataset(config, test_year):
     

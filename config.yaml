@@ -6,11 +6,11 @@ TrainingConfig:
   feature_list:
   - u10
   - v10
-  - d2m
   - t2m
+  - d2m
   - msl
   - tp
-  in_channels: 2
+  in_channels: 3
   mean_d2m: 0.4396512806415558
   mean_msl: 0.4387790262699127
   mean_t2m: 0.46083998680114746
@@ -19,7 +19,7 @@ TrainingConfig:
   mean_v10: 0.46481069922447205
   model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/model 
   num_train_epochs: 100
-  out_channels: 2
+  out_channels: 3
   output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/output
   patch_size: 32
   preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/preds
@@ -36,4 +36,5 @@ TrainingConfig:
   train_batch_size: 16
   train_end_date: '1982-12-31'
   train_start_date: '1980-01-01'
-  pretraining: False
+  pretraining: True
+
