@@ -1,5 +1,5 @@
 TrainingConfig:
-  config_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/config.yaml
+  config_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/configs/EDSR_config.yaml
   data_path: /mnt/qb/work/ludwig/lqb122/data/all_years_merged_era5.nc
   eval_batch_size: 1
   feature_channels: 64
