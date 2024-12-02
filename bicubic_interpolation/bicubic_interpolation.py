@@ -32,6 +32,16 @@ def bicubic_interpolation(lr_patch, scaling_factor):
                         interpolation=cv2.INTER_CUBIC)
     sr_patch = torch.tensor(sr_patch).unsqueeze(2).permute(2, 0, 1)
     return sr_patch
+def bicubic_interpolation(lr_patch, scaling_factor):
+    if lr_patch.dim() == 3:
+        lr_patch = lr_patch.unsqueeze(0) 
+    sr_patch = torch.nn.functional.interpolate(
+        lr_patch, 
+        scale_factor=scaling_factor, 
+        mode='bicubic', 
+        align_corners=False
+    )
+    return sr_patch.squeeze(0)  
 
 def mae_loss(sr_patch, hr_patch):
     return torch.mean(torch.abs(sr_patch - hr_patch))
@@ -53,51 +63,30 @@ def main(config, test_year):
     _, train_scale = rescale_data(train_data, custom_scale=None)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)
     
-    test_tensor = torch.stack([torch.tensor(test_data[var].values) for var in ['u10', 'v10']], dim=1)
-    #print(test_tensor.shape)
+    test_tensor = torch.stack([torch.tensor(test_data[var].values) for var in ['u10', 'v10', 't2m']], dim=1)
     print(f'Loaded test data for {test_year}')
     for i in range(test_tensor.shape[0]):
-        u10 = test_tensor[i, 0, :, :]
-        v10 = test_tensor[i, 1, :, :]
-        hr_wind_speed = torch.sqrt(u10 ** 2 + v10 ** 2)
-        
-        lr_u10 = torch.nn.functional.avg_pool2d(
-            u10.unsqueeze(0).unsqueeze(0), 
+    
+        lr_vars = torch.nn.functional.avg_pool2d(
+            test_tensor[i,:,:,:].unsqueeze(0), 
             kernel_size=config.scaling_factor, 
             stride=config.scaling_factor
-        ).squeeze(0)  # Remove the batch dimension but keep channel
-
-        lr_v10 = torch.nn.functional.avg_pool2d(
-            v10.unsqueeze(0).unsqueeze(0), 
-            kernel_size=config.scaling_factor, 
-            stride=config.scaling_factor
-        ).squeeze(0) 
-
-        sr_u10 = bicubic_interpolation(lr_u10, config.scaling_factor)
-        sr_v10 = bicubic_interpolation(lr_v10, config.scaling_factor)
-
-        sr_wind_speed = torch.sqrt(sr_u10 ** 2 + sr_v10 ** 2)
-        
-        # Stack sr_u10 and sr_v10 along the channel dimension to store in output
-        output.append(torch.stack([sr_u10, sr_v10], dim=1).squeeze(0))
-        mse += mse_loss(sr_wind_speed, hr_wind_speed).item()
-        mae += mae_loss(sr_wind_speed, hr_wind_speed).item()
-        
-        hr_images.append(hr_wind_speed.view(-1))
-        sr_images.append(sr_wind_speed.view(-1))
-
+        ).squeeze(0)
+    
+        sr_vars = bicubic_interpolation(lr_vars, config.scaling_factor)
+    
+        output.append(sr_vars.squeeze(0))
+        mse += mse_loss(sr_vars, test_tensor[i,:,:,:]).item()
+        mae += mae_loss(sr_vars, test_tensor[i,:,:,:]).item()
+        hr_images.append(test_tensor[i,:,:,:].view(-1))
+        sr_images.append(sr_vars.view(-1))
     mse /= test_tensor.shape[0]
     mae /= test_tensor.shape[0]
     r2 = r2_score(torch.cat(sr_images), torch.cat(hr_images))
-    # Save the output tensor with shape (n, 2, 32, 32)
     torch.save(torch.stack(output), f'{config.output_dir}/baseline_{test_year}_{config.scaling_factor}x.pt')
     print(f'MSE: {mse:.6f}, MAE: {mae:.6f}, R²: {r2:.6f}')
 
 
-        
-    
-
-    
 if __name__ == "__main__":
     for year in range(1984, 2024):
         main(config, year)
