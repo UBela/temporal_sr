@@ -226,7 +226,7 @@ class CustomTrainer(Trainer):
         preds_tensor = torch.stack(sr_patches)
         
         print(f'Saving predictions for year {test_year}...')
-        torch.save(preds_tensor, f'{config.preds_dir}/EDSR_{test_year}_{scale}x.pt')
+        torch.save(preds_tensor, f'{config.preds_dir}/EDSR_2010_13_{test_year}_{scale}x.pt')
 
         total_mse /= len(eval_dataloader)
         total_mae /= len(eval_dataloader)
