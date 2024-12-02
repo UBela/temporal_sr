@@ -19,7 +19,7 @@ echo "-------- PYTHON OUTPUT ----------"
 
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-python3 -m EDSR.main config.yaml
+python3 -m EDSR.main configs/EDSR_config.yaml
 
 echo "---------------------------------"
 
