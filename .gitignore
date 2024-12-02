@@ -13,6 +13,7 @@ __pycache__/
 *.out
 *.err
 
+.json
 
 # Distribution / packaging
 
