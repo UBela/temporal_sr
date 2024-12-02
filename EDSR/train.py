@@ -136,8 +136,8 @@ class CustomTrainer(Trainer):
                     t.update(len(lr_patches))
                     
                 self.train_losses.append(epoch_losses.avg)
-                test_year = config.test_start_date.split('-')[0]   
-                eval_mae, eval_mse, eval_r2 = self.eval(epoch, test_year=test_year) 
+            
+                eval_mae, eval_mse, eval_r2 = self.eval(epoch, test_year=config.test_year_pretraining) 
                 
                 if (eval_mae < self.best_eval_mae or
                     eval_mse < self.best_eval_mse or
@@ -209,14 +209,7 @@ class CustomTrainer(Trainer):
             
 
             sr_patches.append(pred_features.squeeze(0).to('cpu'))
-            """
-            wind_speed_pred = self.get_wind_speed(pred_features[:, 0, :, :], pred_features[:, 1, :, :])
-            wind_speed_label = self.get_wind_speed(label_features[:, 0, :, :], label_features[:, 1, :, :])
-            temp_pred = pred_features[:, 2, :, :]
-            temp_label = label_features[:, 2, :, :]
-            pred_features = torch.cat([wind_speed_pred, temp_pred], dim=1)
-            label_features = torch.cat([wind_speed_label, temp_label], dim=1)
-            """
+           
             all_preds.append(pred_features.view(-1))
             all_labels.append(label_features.view(-1))
             
