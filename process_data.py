@@ -63,22 +63,19 @@ def save_means_stds(config_path, dataset, feature_names):
         feature_tensors.append(lr_patches)
     
     features = torch.stack(feature_tensors, dim=0)  # Shape: (num_samples, num_channels, H, W)
-    means = features.view(features.shape[1], -1).mean(dim=1)  # Mean across spatial dimensions
-    stds = features.view(features.shape[1], -1).std(dim=1)  # Std across spatial dimensions
+    means = features.view(features.shape[1], -1).mean(dim=1)  
+    stds = features.view(features.shape[1], -1).std(dim=1) 
     
-    # Load the existing configuration
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file) or {}
     training_config = config.get("TrainingConfig", {})
 
-    # Save means and stds with feature names
     for mean, std, var in zip(means, stds, feature_names):
         training_config[f'mean_{var}'] = float(mean)
         training_config[f'std_{var}'] = float(std)
     
     config["TrainingConfig"] = training_config
 
-    # Write updated configuration to file
     with open(config_path, 'w') as file:
         yaml.dump(config, file)
 
@@ -108,7 +105,7 @@ class SuperresDataset(Dataset):
         lr_patches = []
 
         for var in self.features:
-              
+            
             hr_patch = self.hr_data[var][index, :, :].values
             lr_patch = average_pooling(hr_patch, self.scale)
 
@@ -132,9 +129,7 @@ def initialize_dataset(config, test_year):
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
     train_data, train_scale = rescale_data(train_data)
-    test_data, _ = rescale_data(test_data, custom_scale=train_scale)
-    # print range of train and test data
-    
+    test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
     train_dataset = SuperresDataset(train_data)
     #save_means_stds(config.config_path, train_dataset, config.feature_list)

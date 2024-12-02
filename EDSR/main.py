@@ -23,7 +23,7 @@ print(f"Device: {device}")
 
 
 if config.pretraining:
-    train_dataset, eval_dataset = initialize_dataset(config, test_year = config.test_year)
+    train_dataset, eval_dataset = initialize_dataset(config, test_year = config.test_year_pretraining)
     training_args =TrainingArguments(
             output_dir=config.output_dir,
             num_train_epochs=config.num_train_epochs)
@@ -45,8 +45,8 @@ if config.pretraining:
     print(f"Training time: {train_end_time - train_start_time} seconds")
     trainer.plot_metrics()
 else:
-    years = [1984 + i for i in range(2023 - 1984 + 1)]
-    for year in years:
+    
+    for year in range(config.test_years_start, config.test_years_end + 1):
         
         
         
@@ -63,6 +63,7 @@ else:
 
         #Inference
         print("Inference for year", year)
+        
         pretrained_model.load_state_dict(torch.load(f"{config.model_path}/pytorch_model_{config.scaling_factor}x.pt", weights_only=False))
         pretrained_model.to(device)
         tester = CustomTrainer(pretrained_model, training_args, train_dataset, eval_dataset)
