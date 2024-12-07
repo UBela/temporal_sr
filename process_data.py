@@ -18,7 +18,6 @@ parser.add_argument('config_path', type=str, help='Path to the config file')
 args = parser.parse_args()
 config = Box(load_config(args.config_path)['TrainingConfig'])
 
-# Use config values instead of hardcoding
 DATA_PATH = config.data_path
 SCALE = config.scaling_factor
 PATCH_SIZE = config.patch_size
@@ -56,13 +55,12 @@ def rescale_data(data, custom_scale = None):
 
 
 def save_means_stds(config_path, dataset, feature_names):
-    # Stack all data for mean and std calculation
     feature_tensors = []
     for i in range(len(dataset)):
         lr_patches, _ = dataset[i]  
         feature_tensors.append(lr_patches)
     
-    features = torch.stack(feature_tensors, dim=0)  # Shape: (num_samples, num_channels, H, W)
+    features = torch.stack(feature_tensors, dim=0)
     means = features.view(features.shape[1], -1).mean(dim=1)  
     stds = features.view(features.shape[1], -1).std(dim=1) 
     
@@ -73,7 +71,7 @@ def save_means_stds(config_path, dataset, feature_names):
     for mean, std, var in zip(means, stds, feature_names):
         training_config[f'mean_{var}'] = float(mean)
         training_config[f'std_{var}'] = float(std)
-    
+        print(f'{var}: mean={mean}, std={std}')
     config["TrainingConfig"] = training_config
 
     with open(config_path, 'w') as file:
@@ -89,11 +87,13 @@ def average_pooling(data, scale, to_int=False):
 
 
 class SuperresDataset(Dataset):
-    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST):
+    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST, normalize = True):
         super().__init__()
-        self.hr_data = dataset
+        self.hr_data = dataset# Use config values instead of hardcoding
+
         self.scale = scaling_factor
         self.features = features
+        self.normalize = normalize
         self.transforms = transforms.Compose([
             transforms.Normalize(mean=means, std=[1.0]*len(means))
         ])
@@ -115,8 +115,10 @@ class SuperresDataset(Dataset):
 
         hr_patches = torch.stack(hr_patches, axis=0)
         lr_patches = torch.stack(lr_patches, axis=0)
-        hr_patches = self.transforms(hr_patches)
-        lr_patches = self.transforms(lr_patches)
+        if self.normalize:
+            
+            hr_patches = self.transforms(hr_patches)
+            lr_patches = self.transforms(lr_patches)
         
         return lr_patches, hr_patches
 
@@ -131,8 +133,10 @@ def initialize_dataset(config, test_year):
     train_data, train_scale = rescale_data(train_data)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
+    train_dataset = SuperresDataset(train_data, normalize=False)
+    save_means_stds(config.config_path, train_dataset, config.feature_list)
+    
     train_dataset = SuperresDataset(train_data)
-    #save_means_stds(config.config_path, train_dataset, config.feature_list)
     test_dataset = SuperresDataset(test_data)
    
     return train_dataset, test_dataset
