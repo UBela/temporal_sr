@@ -99,6 +99,17 @@ def average_pooling(data, scale, to_int=False):
         data = np.uint8(data)
     return data
 
+def get_random_years(config_path):
+    random_years = np.random.choice(np.arange(1980, 2014), size=3, replace=False)
+            
+    with open(config_path, 'r') as file:
+        c = yaml.safe_load(file) or {}
+    training_config = c.get("TrainingConfig", {})
+    training_config['random_years'] = random_years
+    c["TrainingConfig"] = training_config
+    with open(config_path, 'w') as file:
+        yaml.dump(c, file)  
+    return random_years
 
 class SuperresDataset(Dataset):
     def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST, normalize = True):
@@ -144,14 +155,7 @@ def initialize_dataset(config, test_year):
     if config.use_random_years:
         # For training randomly sample 3 years and save them in config for evaluation
         if config.pretraining:
-            random_years = np.random.choice(np.arange(1980, 2014), size=3, replace=False)
-            
-            with open(config.config_path, 'r') as file:
-                config = yaml.safe_load(file) or {}
-            training_config = config.get("TrainingConfig", {})
-            training_config['random_years'] = random_years
-	    with open(config_path, 'w') as file:
-       		yaml.dump(config, file)            
+            random_years = get_random_years(config.config_path)
         # For evaluation use the same 3 years as in pretraining to normalize the data
         else:
             random_years = config.random_years
