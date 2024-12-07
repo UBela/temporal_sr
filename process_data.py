@@ -31,10 +31,12 @@ means = means[:n_in_features]
 
 
 def load_dataset(data, start, end, patch_size, random_years=None):
+    dataset = xr.open_dataset(data)
     dataset = dataset.isel(longitude=slice(0, patch_size), 
                             latitude=slice(0, patch_size))
     if random_years is not None:
-        random_years.append(end.year) # add the test year to the list of random years
+        random_years = list(random_years)
+        random_years.append(int(end.split('-')[0])) # add the test year to the list of random years
         dataset = dataset.sel(valid_time=dataset['valid_time'].dt.year.isin(random_years))
         data_list = []
         for year in random_years:
@@ -148,7 +150,8 @@ def initialize_dataset(config, test_year):
                 config = yaml.safe_load(file) or {}
             training_config = config.get("TrainingConfig", {})
             training_config['random_years'] = random_years
-            
+	    with open(config_path, 'w') as file:
+       		yaml.dump(config, file)            
         # For evaluation use the same 3 years as in pretraining to normalize the data
         else:
             random_years = config.random_years
