@@ -28,9 +28,21 @@ n_in_features = config.in_channels
 means = [config.mean_u10, config.mean_v10, config.mean_t2m, config.mean_d2m, config.mean_msl, config.mean_tp]
 FEATURE_LIST = FEATURE_LIST[:n_in_features]
 means = means[:n_in_features]
-def load_dataset(data, start, end, patch_size):
-    dataset = xr.open_dataset(data).sel(valid_time=slice(start, end)).isel(
-        longitude=slice(0, patch_size), latitude=slice(0, patch_size))
+
+
+def load_dataset(data, start, end, patch_size, random_years=None):
+    dataset = dataset.isel(longitude=slice(0, patch_size), 
+                            latitude=slice(0, patch_size))
+    if random_years is not None:
+        random_years.append(end.year) # add the test year to the list of random years
+        dataset = dataset.sel(valid_time=dataset['valid_time'].dt.year.isin(random_years))
+        data_list = []
+        for year in random_years:
+            data_list.append(dataset.sel(valid_time = dataset['valid_time'].dt.year == year))
+        dataset = xr.concat(data_list, dim='valid_time')
+    else:
+        dataset = xr.open_dataset(data).sel(valid_time=slice(start, end))
+    
     return dataset
 
 def rescale_data(data, custom_scale = None):
@@ -123,11 +135,32 @@ class SuperresDataset(Dataset):
         return lr_patches, hr_patches
 
 def initialize_dataset(config, test_year):
-    
+    random_years = None
     TEST_START = f"{test_year}-01-01"
     TEST_END = f"{test_year}-12-31"
-    data = load_dataset(DATA_PATH, TRAIN_START, TEST_END, PATCH_SIZE)
-    train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
+    
+    if config.use_random_years:
+        # For training randomly sample 3 years and save them in config for evaluation
+        if config.pretraining:
+            random_years = np.random.choice(np.arange(1980, 2014), size=3, replace=False)
+            
+            with open(config.config_path, 'r') as file:
+                config = yaml.safe_load(file) or {}
+            training_config = config.get("TrainingConfig", {})
+            training_config['random_years'] = random_years
+            
+        # For evaluation use the same 3 years as in pretraining to normalize the data
+        else:
+            random_years = config.random_years
+        print(f"Random years: {random_years}")
+        
+    data = load_dataset(DATA_PATH, TRAIN_START, TEST_END, PATCH_SIZE, random_years=random_years)
+    
+    if config.use_random_years:
+        train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
+    else:
+        train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
+        
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
     train_data, train_scale = rescale_data(train_data)
