@@ -167,7 +167,9 @@ def initialize_dataset(config, test_year):
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
         train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
-        
+    
+    # sort indices to avoid error
+    data = data.sortby('valid_time')
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
 
     train_data, train_scale = rescale_data(train_data)
