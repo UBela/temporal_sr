@@ -13,28 +13,32 @@ TrainingConfig:
   in_channels: 3
   mean_d2m: 0.4396512806415558
   mean_msl: 0.4387790262699127
-  mean_t2m: 0.4950719177722931
+  mean_t2m: 0.49289608001708984
   mean_tp: 0.4729074537754059
-  mean_u10: 0.47926926612854004
-  mean_v10: 0.4984028935432434
+  mean_u10: 0.4860799014568329
+  mean_v10: 0.47818610072135925
   model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/models/models_random
   num_train_epochs: 100
   out_channels: 3
   output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/outputs/output_random
   patch_size: 32
   preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/preds/preds_random
-  pretraining: True
-  use_random_years: True
-  scaling_factor: 4
+  pretraining: false
+  random_years:
+  - 1981
+  - 1987
+  - 1983
+  scaling_factor: 8
   std_d2m: 0.2310042679309845
   std_msl: 0.23173673450946808
-  std_t2m: 0.10083146393299103
+  std_t2m: 0.10921908915042877
   std_tp: 0.24947123229503632
-  std_u10: 0.10522343218326569
-  std_v10: 0.09914839267730713
+  std_u10: 0.10651107877492905
+  std_v10: 0.10622883588075638
   test_year_pretraining: 2013
   test_years_end: 2023
   test_years_start: 2014
   train_batch_size: 16
   train_end_date: '2012-12-31'
   train_start_date: '2010-01-01'
+  use_random_years: true

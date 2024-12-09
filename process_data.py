@@ -100,8 +100,7 @@ def average_pooling(data, scale, to_int=False):
     return data
 
 def get_random_years(config_path):
-    random_years = np.random.choice(np.arange(1980, 2014), size=3, replace=False)
-            
+    random_years = list(map(int, np.random.choice(np.arange(1980, 2014), size=3, replace=False)))
     with open(config_path, 'r') as file:
         c = yaml.safe_load(file) or {}
     training_config = c.get("TrainingConfig", {})
