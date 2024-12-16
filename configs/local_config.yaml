@@ -1,6 +1,6 @@
 TrainingConfig:
   config_path: /home/bela/thesis/temporal_sr/local_config.yaml
-  data_path: /home/bela/thesis/data/all_years_merged_era5.nc
+  data_path: /home/bela/thesis/data/merge_atlantic_data.nc
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -10,7 +10,7 @@ TrainingConfig:
   - d2m
   - msl
   - tp
-  in_channels: 6
+  in_channels: 3
   mean_d2m: 271.56866455078125
   mean_msl: 100409.0234375
   mean_t2m: 273.1571044921875
@@ -19,17 +19,11 @@ TrainingConfig:
   mean_v10: 0.43577271699905396
   model_path: /home/bela/thesis/temporal_sr/EDSR/model
   num_train_epochs: 10
-  out_channels: 2
+  out_channels: 3
   output_dir: /home/bela/thesis/preds
   patch_size: 32
   preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
   scaling_factor: 8
-  std_d2m: 1.780206561088562
-  std_msl: 463.9028625488281
-  std_t2m: 1.826715350151062
-  std_tp: 0.0001541570818517357
-  std_u10: 0.08211711049079895
-  std_v10: 0.07824576646089554
   test_end_date: '1989-12-31'
   test_start_date: '1989-01-01'
   train_batch_size: 16
