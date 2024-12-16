@@ -39,11 +39,12 @@ def load_dataset(data, start, end, patch_size, random_years=None):
         random_years.append(int(end.split('-')[0])) # add the test year to the list of random years
         dataset = dataset.sel(valid_time=dataset['valid_time'].dt.year.isin(random_years))
         data_list = []
-        for year in random_years:
+        for year in random_years: # otherwise random years are sorted
             data_list.append(dataset.sel(valid_time = dataset['valid_time'].dt.year == year))
         dataset = xr.concat(data_list, dim='valid_time')
     else:
-        dataset = xr.open_dataset(data).sel(valid_time=slice(start, end))
+        
+        dataset = dataset.sel(valid_time=slice(start, end))
     
     return dataset
 
@@ -93,6 +94,7 @@ def save_means_stds(config_path, dataset, feature_names):
 
 
 def average_pooling(data, scale, to_int=False):
+
     new_h, new_w = data.shape[0] // scale, data.shape[1] // scale
     data = data.reshape(new_h, scale, new_w, scale).mean(axis=(1, 3))
     if to_int:
@@ -113,8 +115,7 @@ def get_random_years(config_path):
 class SuperresDataset(Dataset):
     def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST, normalize = True):
         super().__init__()
-        self.hr_data = dataset# Use config values instead of hardcoding
-
+        self.hr_data = dataset
         self.scale = scaling_factor
         self.features = features
         self.normalize = normalize
@@ -166,7 +167,7 @@ def initialize_dataset(config, test_year):
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
         train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
-    
+        
     # sort indices to avoid error
     data = data.sortby('valid_time')
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
