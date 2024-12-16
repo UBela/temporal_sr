@@ -64,7 +64,7 @@ def main(config, test_year):
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)
     
     test_tensor = torch.stack([torch.tensor(test_data[var].values) for var in ['u10', 'v10', 't2m']], dim=1)
-    print(f'Loaded test data for {test_year}')
+    print(f'Test data for {test_year}')
     for i in range(test_tensor.shape[0]):
     
         lr_vars = torch.nn.functional.avg_pool2d(
@@ -83,7 +83,7 @@ def main(config, test_year):
     mse /= test_tensor.shape[0]
     mae /= test_tensor.shape[0]
     r2 = r2_score(torch.cat(sr_images), torch.cat(hr_images))
-    torch.save(torch.stack(output), f'{config.output_dir}/baseline_{test_year}_{config.scaling_factor}x.pt')
+    torch.save(torch.stack(output), f'{config.output_dir}/baseline_atlantic_{test_year}_{config.scaling_factor}x.pt')
     print(f'MSE: {mse:.6f}, MAE: {mae:.6f}, R²: {r2:.6f}')
 
 
