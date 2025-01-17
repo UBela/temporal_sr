@@ -1,6 +1,6 @@
 TrainingConfig:
   config_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/configs/EDSR_config.yaml
-  data_path: /mnt/qb/work/ludwig/lqb122/data/merge_atlantic_data.nc
+  data_path: /mnt/qb/work/ludwig/lqb122/data/all_years_merged_era5.nc
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -13,16 +13,16 @@ TrainingConfig:
   in_channels: 3
   mean_d2m: 0.4396512806415558
   mean_msl: 0.4387790262699127
-  mean_t2m: 0.5215343832969666
+  mean_t2m: 0.5267226696014404
   mean_tp: 0.4729074537754059
-  mean_u10: 0.5115142464637756
-  mean_v10: 0.5123587846755981
-  model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/models/models_atlantic
+  mean_u10: 0.5303620100021362
+  mean_v10: 0.5200436115264893
+  model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/models/models_20_23
   num_train_epochs: 100
   out_channels: 3
-  output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/outputs/output_atlantic
+  output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/outputs/output_20_23
   patch_size: 32
-  preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/preds/preds_atlantic
+  preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/preds/preds_20_23
   pretraining: false
   random_years:
   - 1980
@@ -31,14 +31,14 @@ TrainingConfig:
   scaling_factor: 8
   std_d2m: 0.2310042679309845
   std_msl: 0.23173673450946808
-  std_t2m: 0.13607747852802277
+  std_t2m: 0.09388130903244019
   std_tp: 0.24947123229503632
-  std_u10: 0.13409052789211273
-  std_v10: 0.13615688681602478
-  test_year_pretraining: 1983
-  test_years_end: 2023
-  test_years_start: 1984
+  std_u10: 0.08889695256948471
+  std_v10: 0.0888783186674118
+  test_year_pretraining: 2023
+  test_years_end: 2019
+  test_years_start: 1980
   train_batch_size: 16
-  train_end_date: '1982-12-31'
-  train_start_date: '1980-01-01'
+  train_end_date: '2022-12-31'
+  train_start_date: '2020-01-01'
   use_random_years: false
