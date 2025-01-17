@@ -6,6 +6,7 @@ from torchvision import transforms
 import yaml
 from box import Box
 import argparse
+from datetime import datetime
 
 def load_config(config_path):
     with open(config_path, 'r') as file:
@@ -160,18 +161,23 @@ def initialize_dataset(config, test_year):
         else:
             random_years = config.random_years
         print(f"Random years: {random_years}")
-        
-    data = load_dataset(DATA_PATH, TRAIN_START, TEST_END, PATCH_SIZE, random_years=random_years)
     
+    # in case train date is after test date, pass the oldest date as start and newest as end
+    train_start = datetime.strptime(TRAIN_START, '%Y-%m-%d')
+    train_end = datetime.strptime(TRAIN_END, '%Y-%m-%d')
+    test_start = datetime.strptime(TEST_START, '%Y-%m-%d')
+    test_end = datetime.strptime(TEST_END, '%Y-%m-%d')
+    start = min(train_start, test_start).strftime('%Y-%m-%d')
+    end = max(train_end, test_end).strftime('%Y-%m-%d')
+    data = load_dataset(DATA_PATH, start, end, PATCH_SIZE, random_years)
     if config.use_random_years:
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
         train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
-        
+    # print train data length
     # sort indices to avoid error
     data = data.sortby('valid_time')
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
-
     train_data, train_scale = rescale_data(train_data)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
