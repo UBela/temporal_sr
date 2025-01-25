@@ -3,6 +3,7 @@ import xarray as xr
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
+import torch.nn.functional as F
 import yaml
 from box import Box
 import argparse
@@ -147,6 +148,73 @@ class SuperresDataset(Dataset):
             lr_patches = self.transforms(lr_patches)
         
         return lr_patches, hr_patches
+    
+    
+    
+class SuperresDatasetDDIM(Dataset):
+    """
+    Create a dataset for super resolution using DDIM. Each item consists of 4 (t-2, t-1, t, t+1) LR patches and 1 HR patch at timestep t. 
+    The LR patches are preamtively upsampled to the HR patch size using bilinear interpolation.
+    
+
+    Args:
+        Dataset (_type_): _description_
+    """
+    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST, normalize = True):
+        super().__init__()
+        self.hr_data = dataset
+        self.scale = scaling_factor
+        self.features = features
+        self.normalize = normalize
+        self.transforms = transforms.Compose([
+            transforms.Normalize(mean=means, std=[1.0]*len(means))
+        ])
+        self.seq_len_lr = 4
+        
+    
+    def __len__(self):
+        return len(self.hr_data['valid_time'].values)
+    
+    def __getitem__(self, index):
+        hr_patches = torch.stack(
+            [torch.tensor(self.hr_data[var][index, :, :].values, dtype=torch.float32) for var in self.features], 
+            dim=0
+        )
+        
+        lr_patches_seq = []
+        
+        for i in range(self.seq_len_lr):
+            
+            curr_index = index - 2 + i
+            
+            curr_index = max(0, min(curr_index, len(self.hr_data['valid_time'].values) - 1))
+            
+            lr_patch = np.array(
+                [average_pooling(self.hr_data[var][curr_index, :, :].values, self.scale) for var in self.features]
+            )
+            lr_patch = torch.tensor(lr_patch, dtype=torch.float32)  
+            
+            if self.normalize:
+                lr_patch = self.transforms(lr_patch)
+            
+            lr_patches_seq.append(lr_patch)
+        
+        lr_patches = torch.stack(lr_patches_seq, dim=0)
+
+        # Upscale LR patches to match HR patch spatial size
+        lr_patches = F.interpolate(
+            lr_patches, 
+            size=(hr_patches.shape[1], hr_patches.shape[2]), 
+            mode='bilinear', 
+            align_corners=False
+        )
+
+        if self.normalize:
+            hr_patches = self.transforms(hr_patches)
+
+        return lr_patches, hr_patches
+
+        
 
 def initialize_dataset(config, test_year):
     random_years = None
@@ -167,16 +235,18 @@ def initialize_dataset(config, test_year):
     train_end = datetime.strptime(TRAIN_END, '%Y-%m-%d')
     test_start = datetime.strptime(TEST_START, '%Y-%m-%d')
     test_end = datetime.strptime(TEST_END, '%Y-%m-%d')
+    
     start = min(train_start, test_start).strftime('%Y-%m-%d')
     end = max(train_end, test_end).strftime('%Y-%m-%d')
+    
     data = load_dataset(DATA_PATH, start, end, PATCH_SIZE, random_years)
     if config.use_random_years:
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
         train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
-    # print train data length
-    # sort indices to avoid error
+   
     data = data.sortby('valid_time')
+    
     test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
     train_data, train_scale = rescale_data(train_data)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
@@ -190,3 +260,17 @@ def initialize_dataset(config, test_year):
     return train_dataset, test_dataset
 
 
+
+# test the DDIM dataset
+if __name__ == '__main__':
+    data_path = '../data/all_years_merged_era5.nc'
+    train_start = '1980-01-01'
+    train_end = '1980-12-31'
+    patch_size = 32
+    train_set = load_dataset(data_path, train_start, train_end, patch_size)
+    train_set, scale = rescale_data(train_set)
+    print(len(train_set['valid_time'].values))
+    train_dataset = SuperresDatasetDDIM(train_set)
+    lr, hr = train_dataset[0]
+    print(lr.shape, hr.shape)
+   
