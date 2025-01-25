@@ -28,7 +28,7 @@ TrainingConfig:
   - 1980
   - 1994
   - 1993
-  scaling_factor: 8
+  scaling_factor: 4
   std_d2m: 0.2310042679309845
   std_msl: 0.23173673450946808
   std_t2m: 0.09388130903244019
