@@ -4,13 +4,17 @@ from tqdm.auto import tqdm
 from pathlib import Path
 import os
 import torch
+from torch.utils.data import Dataloader
 import torch.nn.functional as F
 from box import Box
 import argparse
 import yaml
 import numpy as np
+import matplotlib.pyplot as plt
+from torcheval.metrics.functional import r2_score 
 from pipeline import CondDDIMPipeline
-from ..process_data import initialize_dataset
+
+
 def load_config(config_path):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
@@ -20,28 +24,99 @@ parser = argparse.ArgumentParser(description='Run model training with config')
 parser.add_argument('config_path', type=str, help='Path to the config file')
 
 args = parser.parse_args()
+config = Box(load_config(args.config_path)['TrainingConfig'])
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-
-def sine_encoding(noise):
-    """Create sinusoidal encoding of noise by splitting it into a set of frequencies.
-    Args:
-        noise (_type_): _description_
-    """
-    embedding_min_freq = 1.0
-    embedding_max_freq = 10000.0
+class Trainer():
+    def __init__(self, model, args, train_dataset, test_dataset):
+        self.train_losses = []
+        self.eval_mses = []
+        self.eval_maes = []
+        self.eval_r2s = []
+        self.train_dataset = train_dataset
+        self. test_dataset = test_dataset
     
-    frequencies = torch.exp(torch.linspace(
-                        start=torch.log(embedding_min_freq),
-                        end=torch.log(embedding_max_freq),
-                        steps=noise.shape[-1],
-                        device=noise.device,))
-    angular_speeds = 2 * np.pi * frequencies
-    embedding = torch.cat([torch.sin(angular_speeds * noise), torch.cos(angular_speeds * noise)], dim=-1)
+    
+    def get_train_dataloader(self):
+        if self.train_dataset is None:
+            raise ValueError('train_dataset is not defined.')
+        
+        data_loader = Dataloader(
+            self.train_dataset,
+            batch_size = config.train_batch_size,
+            shuffle=False,
+        )
+    
+    def get_eval_dataloader(self):
+        eval_dataset = self.eval_dataset if self.eval_dataset else self.train_dataset
+        data_loader = DataLoader(
+            eval_dataset,
+            batch_size=config.eval_batch_size,
+            shuffle=False,
+        )
+        
+    def sine_encoding(self, noise):
+        """Create sinusoidal encoding of noise by splitting it into a set of frequencies.
+        Args:
+            noise (_type_): _description_
+        """
+        embedding_min_freq = config.min_freq # 1.0
+        embedding_max_freq = config.max_freq # 10000.0
+        
+        frequencies = torch.exp(torch.linspace(
+                            start=torch.log(embedding_min_freq),
+                            end=torch.log(embedding_max_freq),
+                            steps=noise.shape[-1],
+                            device=noise.device,))
+        angular_speeds = 2 * np.pi * frequencies
+        embedding = torch.cat([torch.sin(angular_speeds * noise), torch.cos(angular_speeds * noise)], dim=-1)
     return embedding
-    
 
+    def plot_metrics(self):
+        epochs = range(len(self.train_losses))
+
+        train_losses_log = torch.log(torch.tensor(self.train_losses))
+        eval_mses_log = torch.log(torch.tensor(self.eval_mses))
+        eval_maes_log = torch.log(torch.tensor(self.eval_maes))
+
+        plt.figure(figsize=(18, 5))
+
+        # Plot training loss
+        plt.subplot(1, 3, 1)
+        plt.plot(epochs, train_losses_log, label="Training Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log MSE Loss")
+        plt.title("Training Loss Over Epochs")
+        plt.legend()
+
+        # Plot evaluation MSE
+        plt.subplot(1, 3, 2)
+        plt.plot(epochs, eval_mses_log, label="Evaluation MSE", color="orange")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log MSE")
+        plt.title("Evaluation MSE Over Epochs")
+        plt.legend()
+
+        # Plot evaluation MAE
+        plt.subplot(1, 3, 3)
+        plt.plot(epochs, eval_maes_log, label="Evaluation MAE", color="green")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log MAE")
+        plt.title("Evaluation MAE Over Epochs")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.savefig(f'{config.output_dir}/training_eval_metrics_{config.scaling_factor}x.png')
+        plt.close()
+
+    def train():
+        pass
+    
+    def evaluate():
+        pass
+    
+    
 def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler):
     # Initialize accelerator and tensorboard logging
     accelerator = Accelerator(
@@ -140,26 +215,57 @@ def train_loop(config, model, noise_scheduler, optimizer, train_dataloader, lr_s
                     pipeline.save_pretrained(config.output_dir)
                     
                     
-def evaluate(config, epoch, pipeline):
-    # Load the validation dataset
-    val_dataset = initialize_dataset(config, config.test_year)
-    val_dataloader = torch.utils.data.DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        pin_memory=True,
-        shuffle=False,
-    )
-
+def evaluate(config, epoch, pipeline, test_dataloader):
+    mses = []
+    maes = []
+    r2_scores = []
+    eval_steps = 0
     # Evaluate the model
     pipeline.eval()
     with torch.no_grad():
-        for i, (low_res_images, high_res_images) in enumerate(val_dataloader):
+        for i, (low_res_images, high_res_images) in enumerate(test_dataloader):
+            
             low_res_images, high_res_images = low_res_images.to(device), high_res_images.to(device)
-            noisy_images = pipeline(low_res_images, return_dict=False)[0]
-            loss = F.mse_loss(noisy_images, high_res_images)
-            if i == 0:
-                pipeline.save_image(noisy_images, high_res_images, epoch, config.output_dir)
-            logs = {"val_loss": loss.item()}
-            accelerator.log(logs, step=epoch)
-    pipeline.train()
+            
+            samples = pipeline(
+                batch_size = config.eval_batch_size,
+                image = low_res_images,
+                generator = torch.Generator,
+                num_images_per_cond = config.num_images_per_cond,
+                num_inference_steps = config.num_inference_steps,
+                output_type = 'np.array'
+            ).images
+            samples = torch.from_numpy(samples)
+            
+            eval_steps += 1
+            
+            
+            batch_size = int(samples.shape[0] / config.num_images_per_cond)
+            sample_preds = samples.view(config.num_images_per_cond,
+                                        batch_size,
+                                        config.out_channels,
+                                        config.patch_size,
+                                        config.patch_size)
+            
+            preds = sample_preds.mean(dim=0)
+            
+            if eval_steps <= 1:
+                fig, ax = plt.subplots(1, 5, figsize=(25, 5))
+                ax[0].imshow(sample_preds[0,0,0,:,:].cpu().numpy(), cmap='inferno')
+                ax[0].set_title(f'Single Sample Prediction 1')
+                ax[1]imshow(sample_preds[1,0,0,:,:].cpu().numpy(), cmap='inferno')
+                ax[1]set_title(f'Single Sample Prediction 2')
+                ax[2]imshow(low_res_image[0,0,0,:,:].cpu().numpy(), cmap='inferno')
+                ax[2]set_title(f'Low Res Input')
+                ax[3].imshow(high_res_images[0,0,:,:].cpu().numpy(), cmap='inferno')
+                ax[3].set_title(f'HR Ground Truth')
+                ax[4].imshow(preds[0,0,:,:].cpu().numpy(), cmap='inferno')
+                ax[4].set_title(f'Average Prediction')
+                plt.savefig(f'{config.output_dir}/output_epoch{epoch}.png')
+                plt.close()
+            
+            
+            
+            
+            
+           
