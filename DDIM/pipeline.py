@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from diffusers import DiffusionPipeline, DDIMScheduler, ImagePipelineOutput, UNet2DModel
-
+import inspect
 class CondDDIMPipeline(DiffusionPipeline):
     r"""
     Pipeline for image generation.
@@ -35,6 +35,7 @@ class CondDDIMPipeline(DiffusionPipeline):
         batch_size: int = 1,
         image: torch.Tensor = None,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
+        num_images_per_condition: Optional[int] = 1,
         eta: float = 0.0,
         num_inference_steps: int = 50,
         use_clipped_model_output: Optional[bool] = None,
@@ -46,28 +47,40 @@ class CondDDIMPipeline(DiffusionPipeline):
         
         generator = generator or torch.Generator(device=self._execution_device)
         
-        latens
+        latents_shape = (batch_size * num_images_per_condition, self.unet.config.out_channels, height, width)
         
+        latents = torch.randn(latents_shape, device=self._execution_device, generator=generator)
+        latents_dtype = next(self.unet.parameters()).dtype
         
-
+        image = torch.cat([image] * num_images_per_condition, dim=0).to(latents_dtype)
+        image = image.to(self._execution_device, dtype=latents_dtype)
+    
         # set step values
         self.scheduler.set_timesteps(num_inference_steps)
-
+        
+        latents *= self.scheduler.init_noise_sigma
+        
+        accepts_eta = "eta" in set(inspect.signature(self.scheduler.step).parameters.keys())
+        extra_kwargs = {}   
+        if accepts_eta:
+            extra_kwargs['eta'] = eta
         for t in self.progress_bar(self.scheduler.timesteps):
+            
+            latents_input = torch.cat([latents, image], dim=1)
+            latents_input = self.scheduler.scale_model_input(latents_input, t)
             # 1. predict noise model_output
-            model_output = self.unet(image, t).sample
+            model_output = self.unet(latents_input, t).sample
 
             # 2. predict previous mean of image x_t-1 and add variance depending on eta
             # eta corresponds to η in paper and should be between [0, 1]
             # do x_t -> x_t-1
-            image = self.scheduler.step(
-                model_output, t, image, eta=eta, use_clipped_model_output=use_clipped_model_output, generator=generator
+            latents = self.scheduler.step(
+                model_output, t, latents, eta=eta, use_clipped_model_output=use_clipped_model_output, generator=generator
             ).prev_sample
 
           
 
-        image = (image / 2 + 0.5).clamp(0, 1)
-        image = image.cpu().permute(0, 2, 3, 1).numpy()
+        image = latents.cpu().numpy()
         if output_type == "pil":
             image = self.numpy_to_pil(image)
 

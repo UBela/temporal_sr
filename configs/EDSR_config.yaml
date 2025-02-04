@@ -10,6 +10,7 @@ TrainingConfig:
   - d2m
   - msl
   - tp
+  edsr: True
   in_channels: 3
   mean_d2m: 0.4396512806415558
   mean_msl: 0.4387790262699127

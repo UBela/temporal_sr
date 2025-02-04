@@ -19,7 +19,7 @@ from utils import *
 def load_config(file_path):
     with open(file_path, "r") as file:
         config = yaml.safe_load(file)
-    return configimport 
+    return config
 
 
 parser = argparse.ArgumentParser(description='Run model training with configuration.')
@@ -77,9 +77,7 @@ class CustomTrainer(Trainer):
         
         return data_loader
     
-    def get_wind_speed(self, u , v):
-        
-        return torch.sqrt(u ** 2 + v ** 2)
+    
     
     
     def initialize_eval_dataloader(self):
