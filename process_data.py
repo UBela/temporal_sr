@@ -134,7 +134,7 @@ class SuperresDatasetDDIM(Dataset):
         self.transforms = transforms.Compose([
             transforms.Normalize(mean=self.means, std=[1.0]*len(self.means))
         ])
-        self.seq_len_lr = seq_len_lr
+        self.seq_len_lr = config.sequence_length
         
     
     def __len__(self):
