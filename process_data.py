@@ -1,3 +1,7 @@
+import sys
+sys.path.insert(0, '.')
+sys.path.insert(1, '..')
+
 import numpy as np
 import xarray as xr
 import torch
@@ -8,7 +12,7 @@ import yaml
 from box import Box
 import argparse
 from datetime import datetime
-
+from utils import *
 def load_config(config_path):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
@@ -38,27 +42,6 @@ def load_dataset(data, start, end, patch_size, random_years=None):
     
     return dataset
 
-def rescale_data(data, custom_scale = None):
-    returned_scale = {}
-    for var in data:
-        
-        if custom_scale and var in custom_scale:
-            min_val = custom_scale[var]['min']
-            max_val = custom_scale[var]['max']
-        else:
-            min_val = data[var].values.min()
-            max_val = data[var].values.max()
-            
-            returned_scale[var] = {'min': min_val, 'max': max_val}
-            
-            
-        # Rescale to the target range [0, 1]
-        data[var] = (data[var] - min_val) / (max_val - min_val)  
-        
-        
-    return data, returned_scale
-
-
 def save_means_stds(config_path, dataset, feature_names):
     feature_tensors = []
     for i in range(len(dataset)):
@@ -82,14 +65,6 @@ def save_means_stds(config_path, dataset, feature_names):
     with open(config_path, 'w') as file:
         yaml.dump(config, file)
 
-
-def average_pooling(data, scale, to_int=False):
-
-    new_h, new_w = data.shape[0] // scale, data.shape[1] // scale
-    data = data.reshape(new_h, scale, new_w, scale).mean(axis=(1, 3))
-    if to_int:
-        data = np.uint8(data)
-    return data
 
 def get_random_years(config_path):
     random_years = list(map(int, np.random.choice(np.arange(1980, 2014), size=3, replace=False)))

@@ -1,3 +1,7 @@
+import sys
+sys.path.insert(0, '.')
+sys.path.insert(1, '..')
+
 from super_image import Trainer
 import torch
 import torch.nn as nn
@@ -10,12 +14,13 @@ from box import Box
 import matplotlib.pyplot as plt
 from torcheval.metrics.functional import r2_score 
 from typing import Optional, Union
-
+from utils import *
 
 def load_config(file_path):
     with open(file_path, "r") as file:
         config = yaml.safe_load(file)
-    return config
+    return configimport 
+
 
 parser = argparse.ArgumentParser(description='Run model training with configuration.')
 parser.add_argument('config_path', type=str, help='Path to the configuration yaml file.')
@@ -191,8 +196,8 @@ class CustomTrainer(Trainer):
             
             with torch.no_grad():
                 pred = self.model(lr_patches)
-            pred_features = self.denormalize(pred)            
-            label_features = self.denormalize(hr_patches)
+            pred_features = denormalize(pred, means)            
+            label_features = denormalize(hr_patches, means)
             if eval_step <= 1:
                
                 # Plotting
@@ -214,8 +219,8 @@ class CustomTrainer(Trainer):
             all_labels.append(label_features.view(-1))
             
             
-            total_mse += self.calc_mse(pred_features.to('cpu'), label_features.to('cpu')).item()
-            total_mae += self.calc_mae(pred_features.to('cpu'), label_features.to('cpu')).item()
+            total_mse += calc_mse(pred_features.to('cpu'), label_features.to('cpu')).item()
+            total_mae += calc_mae(pred_features.to('cpu'), label_features.to('cpu')).item()
         preds_tensor = torch.stack(sr_patches)
         
         print(f'Saving predictions for year {test_year}...')
