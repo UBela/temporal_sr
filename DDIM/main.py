@@ -32,7 +32,7 @@ if config.pretraining:
     
     lr_scheduler = get_cosine_schedule_with_warmup(
         optimizer, 
-        num_warmup_steps=config.num_warmup_steps, 
+        num_warmup_steps=config.lr_warmup_steps, 
         num_training_steps= config.num_training_steps * config.num_train_epochs)
     
     noise_scheduler = DDIMScheduler(num_train_timesteps=config.num_training_steps)

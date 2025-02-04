@@ -253,7 +253,7 @@ class DDIMTrainer():
                     image = low_res_images,
                     generator = torch.Generator(device=self.device),
                     num_images_per_cond = config.num_images_per_cond,
-                    num_inference_steps = config.num_inference_steps,
+                    num_inference_steps = config.num_inference_timesteps,
                     output_type = 'np.array'
                 ).images
                 samples = torch.from_numpy(samples)
