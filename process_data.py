@@ -20,18 +20,6 @@ parser.add_argument('config_path', type=str, help='Path to the config file')
 args = parser.parse_args()
 config = Box(load_config(args.config_path)['TrainingConfig'])
 
-DATA_PATH = config.data_path
-SCALE = config.scaling_factor
-PATCH_SIZE = config.patch_size
-FEATURE_LIST = config.feature_list
-TRAIN_START = config.train_start_date
-TRAIN_END = config.train_end_date
-n_in_features = config.in_channels
-means = [config.mean_u10, config.mean_v10, config.mean_t2m, config.mean_d2m, config.mean_msl, config.mean_tp]
-FEATURE_LIST = FEATURE_LIST[:n_in_features]
-means = means[:n_in_features]
-
-
 def load_dataset(data, start, end, patch_size, random_years=None):
     dataset = xr.open_dataset(data)
     dataset = dataset.isel(longitude=slice(0, patch_size), 
@@ -41,7 +29,7 @@ def load_dataset(data, start, end, patch_size, random_years=None):
         random_years.append(int(end.split('-')[0])) # add the test year to the list of random years
         dataset = dataset.sel(valid_time=dataset['valid_time'].dt.year.isin(random_years))
         data_list = []
-        for year in random_years: # otherwise random years are sorted
+        for year in random_years: 
             data_list.append(dataset.sel(valid_time = dataset['valid_time'].dt.year == year))
         dataset = xr.concat(data_list, dim='valid_time')
     else:
@@ -115,14 +103,15 @@ def get_random_years(config_path):
     return random_years
 
 class SuperresDataset(Dataset):
-    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST, normalize = True):
+    def __init__(self, dataset, config, normalize = True):
         super().__init__()
         self.hr_data = dataset
-        self.scale = scaling_factor
-        self.features = features
+        self.scale = config.scaling_factor
+        self.features = config.feature_list[:config.in_channels]
         self.normalize = normalize
+        self.means = [config.mean_u10, config.mean_v10, config.mean_t2m]
         self.transforms = transforms.Compose([
-            transforms.Normalize(mean=means, std=[1.0]*len(means))
+            transforms.Normalize(mean=self.means, std=[1.0]*len(self.means))
         ])
     def __len__(self):
         return len(self.hr_data['valid_time'].values)
@@ -153,23 +142,24 @@ class SuperresDataset(Dataset):
     
 class SuperresDatasetDDIM(Dataset):
     """
-    Create a dataset for super resolution using DDIM. Each item consists of 4 (t-2, t-1, t, t+1) LR patches and 1 HR patch at timestep t. 
+    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and 1 HR patch at timestep t. 
     The LR patches are preamtively upsampled to the HR patch size using bilinear interpolation.
     
 
     Args:
         Dataset (_type_): _description_
     """
-    def __init__(self, dataset, scaling_factor=SCALE, features=FEATURE_LIST, normalize = True):
+    def __init__(self, dataset, config, normalize = True, seq_len_lr=3):
         super().__init__()
         self.hr_data = dataset
-        self.scale = scaling_factor
-        self.features = features
+        self.scale = config.scaling_factor
+        self.features = config.feature_list[:config.in_channels]
         self.normalize = normalize
+        self.means = [config.mean_u10, config.mean_v10, config.mean_t2m]
         self.transforms = transforms.Compose([
-            transforms.Normalize(mean=means, std=[1.0]*len(means))
+            transforms.Normalize(mean=self.means, std=[1.0]*len(self.means))
         ])
-        self.seq_len_lr = 4
+        self.seq_len_lr = seq_len_lr
         
     
     def __len__(self):
@@ -185,7 +175,7 @@ class SuperresDatasetDDIM(Dataset):
         
         for i in range(self.seq_len_lr):
             
-            curr_index = index - 2 + i
+            curr_index = index - 1 + i
             
             curr_index = max(0, min(curr_index, len(self.hr_data['valid_time'].values) - 1))
             
@@ -218,8 +208,8 @@ class SuperresDatasetDDIM(Dataset):
 
 def initialize_dataset(config, test_year):
     random_years = None
-    TEST_START = f"{test_year}-01-01"
-    TEST_END = f"{test_year}-12-31"
+    test_start = f"{test_year}-01-01"
+    test_end = f"{test_year}-12-31"
     
     if config.use_random_years:
         # For training randomly sample 3 years and save them in config for evaluation
@@ -231,38 +221,44 @@ def initialize_dataset(config, test_year):
         print(f"Random years: {random_years}")
     
     # in case train date is after test date, pass the oldest date as start and newest as end
-    train_start = datetime.strptime(TRAIN_START, '%Y-%m-%d')
-    train_end = datetime.strptime(TRAIN_END, '%Y-%m-%d')
-    test_start = datetime.strptime(TEST_START, '%Y-%m-%d')
-    test_end = datetime.strptime(TEST_END, '%Y-%m-%d')
+    train_start = datetime.strptime(config.train_start_date, '%Y-%m-%d')
+    train_end = datetime.strptime(config.train_end_date, '%Y-%m-%d')
+    test_start = datetime.strptime(test_start, '%Y-%m-%d')
+    test_end = datetime.strptime(test_end, '%Y-%m-%d')
     
     start = min(train_start, test_start).strftime('%Y-%m-%d')
     end = max(train_end, test_end).strftime('%Y-%m-%d')
     
-    data = load_dataset(DATA_PATH, start, end, PATCH_SIZE, random_years)
+    data = load_dataset(config.data_path, start, end, config.patch_size, random_years)
     if config.use_random_years:
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
-        train_data = data.sel(valid_time=slice(TRAIN_START, TRAIN_END))
+        train_data = data.sel(valid_time=slice(config.train_start_date, config.train_start_date))
    
     data = data.sortby('valid_time')
     
-    test_data = data.sel(valid_time=slice(TEST_START, TEST_END))
+    test_data = data.sel(valid_time=slice(test_start, test_end))
     train_data, train_scale = rescale_data(train_data)
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
-    train_dataset = SuperresDataset(train_data, normalize=False)
-    save_means_stds(config.config_path, train_dataset, config.feature_list)
-    
-    train_dataset = SuperresDataset(train_data)
-    test_dataset = SuperresDataset(test_data)
-   
+    if config.edsr:
+        train_dataset = SuperresDataset(train_data, config, normalize=False)
+        save_means_stds(config.config_path, train_dataset, config.feature_list)
+        
+        train_dataset = SuperresDataset(train_data, config)
+        test_dataset = SuperresDataset(test_data, config)
+    else:
+        train_dataset = SuperresDatasetDDIM(train_data,config, normalize=False)
+        save_means_stds(config.config_path, train_dataset, config.feature_list)
+        train_dataset = SuperresDatasetDDIM(train_data, config)
+        test_dataset = SuperresDatasetDDIM(test_data, config)
     return train_dataset, test_dataset
 
 
 
 # test the DDIM dataset
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
     data_path = '../data/all_years_merged_era5.nc'
     train_start = '1980-01-01'
     train_end = '1980-12-31'
@@ -273,4 +269,8 @@ if __name__ == '__main__':
     train_dataset = SuperresDatasetDDIM(train_set)
     lr, hr = train_dataset[0]
     print(lr.shape, hr.shape)
+    fig, ax = plt.subplots(1, 2)
+    ax[0].imshow(lr[0,0,:,:].numpy(), cmap='inferno')
+    ax[1].imshow(hr[0,:,:].numpy(), cmap='inferno')
+    plt.show()
    
