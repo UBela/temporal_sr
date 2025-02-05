@@ -37,7 +37,7 @@ if config.pretraining:
     
     noise_scheduler = DDIMScheduler(num_train_timesteps=config.num_training_steps)
     
-    train_start_time = time.time()
+    
     trainer = DDIMTrainer(
         train_dataset=train_dataset, 
         eval_dataset=eval_dataset, 
@@ -46,22 +46,23 @@ if config.pretraining:
         lr_scheduler=lr_scheduler, 
         noise_scheduler=noise_scheduler, 
         device=device)
+    train_start_time = time.time()
     trainer.train()
     train_end_time = time.time()
     trainer.plot_metrics()
     print(f"Training time: {train_end_time - train_start_time} seconds")
 else:
+    
+    # Inference
+    pretrained_pipeline = CondDDIMPipeline.from_pretrained(config.model_path, use_safetensors=True).to(device)
+    
     for year in range(config.test_years_start, config.test_years_end + 1):
+        print(f"Inference for year {year}")
+
         train_dataset, eval_dataset = initialize_dataset(config, test_year=year)
         
-        repo_id = config.output_dir
-        pretrained_pipeline = CondDDIMPipeline.from_pretrained(repo_id, use_safetensors=True).to(device)
-        print(f"Inference for year {year}")
-        tester = DDIMTrainer(
-            train_dataset=None, 
-            eval_dataset=eval_dataset, 
-            device=device)
-        
+        tester = DDIMTrainer(train_dataset=None, eval_dataset=eval_dataset, device=device)
+    
         eval_start_time = time.time()
 
         tester.evaluate(epoch=0, pipeline=pretrained_pipeline, test_year=year)
