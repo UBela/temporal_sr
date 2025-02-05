@@ -159,7 +159,6 @@ class DDIMTrainer():
             self.model.train()
             epoch_loss = AverageMeter()
             for step, batch in enumerate(train_dataloader):
-                
                 clean_images, low_res_images = batch.to(self.device)
                 
                 
@@ -227,7 +226,7 @@ class DDIMTrainer():
                             ignore_patterns=["step_*", "epoch_*"],
                         )
                     else:
-                        pipeline.save_pretrained(config.output_dir)
+                        pipeline.save_pretrained(config.model_path)
                         
                         
     def evaluate(self, epoch, pipeline, test_year):
