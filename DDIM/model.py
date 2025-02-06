@@ -25,7 +25,7 @@ def customize_model(config: Box):
     model = UNet2DModel(in_channels=config.in_channels,
                         out_channels=config.out_channels,
                         block_out_channels=(64, 128, 256, 384),
-                        down_block_types=("DonwBlock2D", "DownBlock2D", "DownBlock2D", "AttnDownBlock2D"),
+                        down_block_types=("DownBlock2D", "DownBlock2D", "DownBlock2D", "AttnDownBlock2D"),
                         up_block_types=("AttnUpBlock2D", "UpBlock2D", "UpBlock2D", "UpBlock2D"),
                         attention_head_dim=32,
                         )
@@ -44,7 +44,7 @@ def load_pretrained_model(config: Box):
     model.config['in_channels'] = config.in_channels
     model.config['out_channels'] = config.out_channels
     
-    model.config['down_block_types'] = ("DonwBlock2D", "DownBlock2D", "DownBlock2D", "AttnDownBlock2D")
+    model.config['down_block_types'] = ("DownBlock2D", "DownBlock2D", "DownBlock2D", "AttnDownBlock2D")
     model.config['up_block_types'] = ("AttnUpBlock2D", "UpBlock2D", "UpBlock2D", "UpBlock2D")
     model.config['block_out_channels'] = (64, 128, 256, 384)
     model.config['attention_head_dim'] = 32

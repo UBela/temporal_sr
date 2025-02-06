@@ -1,9 +1,8 @@
 TrainingConfig:
   config_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/configs/DDIM_config.yaml
   data_path: /mnt/qb/work/ludwig/lqb122/data/all_years_merged_era5.nc
+  edsr: false
   eval_batch_size: 1
-  learning_rate: 0.0001
-
   feature_list:
   - u10
   - v10
@@ -11,29 +10,46 @@ TrainingConfig:
   - d2m
   - msl
   - tp
-  edsr: False
+  gradient_accumulation_steps: 1
+  hub_model_id: bela
+  hub_private_repo: true
   in_channels: 12
-  mean_d2m: 0.4396512806415558
-  mean_msl: 0.4387790262699127
-  mean_t2m: 0.5267226696014404
-  mean_tp: 0.4729074537754059
-  mean_u10: 0.5303620100021362
-  mean_v10: 0.5200436115264893
+  learning_rate: 0.0001
+  lr_warmup_steps: 50
+  mean_d2m: 0.6507610082626343
+  mean_msl: 0.6999652981758118
+  mean_t2m: 0.6681174039840698
+  mean_tp: 0.6827917098999023
+  mean_u10: 0.6392185091972351
+  mean_v10: 0.6944887638092041
+  mixed_precision: fp16
   model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/DDIM/models/models_80_83
+  num_eval_timesteps: 50
+  num_images_per_cond: 15
   num_train_epochs: 200
+  num_train_timesteps: 1000
   out_channels: 3
   output_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/DDIM/outputs/output_80_83
+  overwrite_outputdir: true
   patch_size: 32
   preds_dir: /mnt/qb/work/ludwig/lqb122/temporal_sr/DDIM/preds/preds_80_83
-  pretraining: True
+  pretraining: true
+  push_to_hub: false
   random_years:
   - 1980
   - 1994
   - 1993
-  scaling_factor: 4
   save_image_epochs: 1
   save_model_epochs: 1
-  mixed_precision: "fp16"
+  scaling_factor: 4
+  seed: 0
+  sequence_length: 3
+  std_d2m: 0.12587487697601318
+  std_msl: 0.12869346141815186
+  std_t2m: 0.12143349647521973
+  std_tp: 0.11483481526374817
+  std_u10: 0.12873104214668274
+  std_v10: 0.12781023979187012
   test_year_pretraining: 1983
   test_years_end: 2023
   test_years_start: 1984
@@ -41,13 +57,4 @@ TrainingConfig:
   train_end_date: '1982-12-31'
   train_start_date: '1980-01-01'
   use_random_years: false
-  hub_model_id: "bela"
-  hub_private_repo: True
-  overwrite_outputdir: True
-  push_to_hub: False
-  seed: 0
-  sequence_length: 3
-  num_train_timesteps: 1000
-  num_eval_timesteps: 50
-  num_images_per_cond: 15
-  weight_decay: 0.00001
+  weight_decay: 1.0e-05
