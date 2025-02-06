@@ -82,7 +82,7 @@ class SuperresDataset(Dataset):
         super().__init__()
         self.hr_data = dataset
         self.scale = config.scaling_factor
-        self.features = config.feature_list[:config.in_channels]
+        self.features = config.feature_list[:3]
         self.normalize = normalize
         self.means = [config.mean_u10, config.mean_v10, config.mean_t2m]
         self.transforms = transforms.Compose([
@@ -128,7 +128,7 @@ class SuperresDatasetDDIM(Dataset):
         super().__init__()
         self.hr_data = dataset
         self.scale = config.scaling_factor
-        self.features = config.feature_list[:config.in_channels]
+        self.features = config.feature_list[:3]
         self.normalize = normalize
         self.means = [config.mean_u10, config.mean_v10, config.mean_t2m]
         self.transforms = transforms.Compose([
@@ -164,15 +164,15 @@ class SuperresDatasetDDIM(Dataset):
             
             lr_patches_seq.append(lr_patch)
         
-        lr_patches = torch.stack(lr_patches_seq, dim=0)
+        lr_patches = torch.cat(lr_patches_seq, dim=0)
 
         # Upscale LR patches to match HR patch spatial size
         lr_patches = F.interpolate(
-            lr_patches, 
+            lr_patches.unsqueeze(0), 
             size=(hr_patches.shape[1], hr_patches.shape[2]), 
             mode='bilinear', 
             align_corners=False
-        )
+        ).squeeze(0)
 
         if self.normalize:
             hr_patches = self.transforms(hr_patches)
@@ -244,8 +244,6 @@ if __name__ == '__main__':
     train_dataset = SuperresDatasetDDIM(train_set)
     lr, hr = train_dataset[0]
     print(lr.shape, hr.shape)
-    fig, ax = plt.subplots(1, 2)
-    ax[0].imshow(lr[0,0,:,:].numpy(), cmap='inferno')
-    ax[1].imshow(hr[0,:,:].numpy(), cmap='inferno')
+    
     plt.show()
    

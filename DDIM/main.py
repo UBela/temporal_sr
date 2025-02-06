@@ -24,7 +24,7 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 if config.pretraining:
     train_dataset, eval_dataset = initialize_dataset(config, test_year = config.test_year_pretraining)
     
-    model, device, total_params = customize_model(config)
+    model, total_params = customize_model(config)
     print(f"Total number of parameters: {total_params}")
     print(f"Device: {device}")
 
@@ -33,14 +33,14 @@ if config.pretraining:
     lr_scheduler = get_cosine_schedule_with_warmup(
         optimizer, 
         num_warmup_steps=config.lr_warmup_steps, 
-        num_training_steps= config.num_training_steps * config.num_train_epochs)
+        num_training_steps= (len(train_dataset) // config.train_batch_size) * config.num_train_epochs)
     
-    noise_scheduler = DDIMScheduler(num_train_timesteps=config.num_training_steps)
+    noise_scheduler = DDIMScheduler(num_train_timesteps=config.num_train_timesteps)
     
     
     trainer = DDIMTrainer(
         train_dataset=train_dataset, 
-        eval_dataset=eval_dataset, 
+        test_dataset=eval_dataset, 
         model=model, 
         optimizer=optimizer, 
         lr_scheduler=lr_scheduler, 
@@ -61,7 +61,7 @@ else:
 
         train_dataset, eval_dataset = initialize_dataset(config, test_year=year)
         
-        tester = DDIMTrainer(train_dataset=None, eval_dataset=eval_dataset, device=device)
+        tester = DDIMTrainer(train_dataset=None, test_dataset=eval_dataset, device=device)
     
         eval_start_time = time.time()
 

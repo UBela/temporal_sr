@@ -16,7 +16,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from torcheval.metrics.functional import r2_score 
-from pipeline import CondDDIMPipeline
+from DDIM.pipeline import CondDDIMPipeline
 from utils import denormalize, calc_mae, calc_mse, AverageMeter
 
 def load_config(config_path):
@@ -43,7 +43,7 @@ class DDIMTrainer():
         self.eval_maes_samples = []
         self.eval_r2s_samples = []
         self.train_dataset = train_dataset
-        self. test_dataset = test_dataset
+        self.test_dataset = test_dataset
         self.model = model
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
@@ -62,7 +62,7 @@ class DDIMTrainer():
         return data_loader
     
     def get_eval_dataloader(self):
-        eval_dataset = self.eval_dataset if self.eval_dataset else self.train_dataset
+        eval_dataset = self.test_dataset if self.test_dataset else self.train_dataset
         data_loader = DataLoader(
             eval_dataset,
             batch_size=config.eval_batch_size,
@@ -128,7 +128,7 @@ class DDIMTrainer():
     def train(self):
         # Initialize accelerator and tensorboard logging
         accelerator = Accelerator(
-            mixeconfigd_precision=config.mixed_precision,
+            mixed_precision=config.mixed_precision,
             gradient_accumulation_steps=config.gradient_accumulation_steps,
             log_with="tensorboard",
             project_dir=os.path.join(config.output_dir, "logs"),
@@ -153,14 +153,14 @@ class DDIMTrainer():
         global_step = 0
 
         # Now you train the model
-        for epoch in range(config.num_epochs):
+        for epoch in range(config.num_train_epochs):
             progress_bar = tqdm(total=len(train_dataloader), disable=not accelerator.is_local_main_process)
             progress_bar.set_description(f"Epoch {epoch}")
             self.model.train()
             epoch_loss = AverageMeter()
             for step, batch in enumerate(train_dataloader):
-                clean_images, low_res_images = batch.to(self.device)
-                
+                low_res_images, clean_images = batch
+                low_res_images, clean_images = low_res_images.to(self.device), clean_images.to(self.device)
                 
                 noise = torch.randn(clean_images.shape, device=clean_images.device)
                 bs = clean_images.shape[0]
@@ -178,15 +178,13 @@ class DDIMTrainer():
                 noisy_images = noisy_images.to(dtype=torch.float16)
                 
                 with accelerator.accumulate(model):
-                    # Predict the noise residual
-                    # add low res images as condition
-                    #low res images are of shape (bs, 3, 3, 32, 32)
-                    # nosiy images are of shape (bs, 3, 32, 32)
                     
-                    # -> concat to (bs, 4, 3, 32, 32)
+                    # add low res images as condition
+                    #low res images are of shape (bs, seq_len * num_features, 32, 32)
+                    # noisy images are of shape (bs, num_features, 32, 32)
                     
                     noisy_images = torch.cat([noisy_images, low_res_images], dim=1)
-                    
+                    # Predict the noise residual
                     noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
                     loss = F.mse_loss(noise_pred, noise)
                     epoch_loss.update(loss.item(), bs)
@@ -209,15 +207,15 @@ class DDIMTrainer():
             if accelerator.is_main_process:
                 pipeline = CondDDIMPipeline(unet=accelerator.unwrap_model(model), scheduler=self.noise_scheduler)
 
-                if (epoch + 1) % config.save_image_epochs == 0 or epoch == config.num_epochs - 1:
-                    mse, mae, r2, mse_samples, mae_samples, r2_samples = self.evaluate(epoch, pipeline, config.test_year)
+                if (epoch + 1) % config.save_image_epochs == 0 or epoch == config.num_train_epochs - 1:
+                    mse, mae, r2, mse_samples, mae_samples, r2_samples = self.evaluate(epoch, pipeline, config.test_year_pretraining)
                     self.eval_mses.append(mse)
                     self.eval_maes.append(mae)
                     self.eval_r2s.append(r2)
                     self.eval_mses_samples.append(mse_samples)
                     self.eval_maes_samples.append(mae_samples)
                     self.eval_r2s_samples.append(r2_samples)
-                if (epoch + 1) % config.save_model_epochs == 0 or epoch == config.num_epochs - 1:
+                if (epoch + 1) % config.save_model_epochs == 0 or epoch == config.num_train_epochs - 1:
                     if config.push_to_hub:
                         upload_folder(
                             repo_id=repo_id,
@@ -239,8 +237,7 @@ class DDIMTrainer():
         all_preds = []
         all_preds_samples = []
         all_labels = []
-        # Evaluate the model
-        pipeline.eval()
+        
         test_dataloader = self.get_eval_dataloader()
         with torch.no_grad():
             for low_res_images, high_res_images in test_dataloader:
@@ -251,8 +248,8 @@ class DDIMTrainer():
                     batch_size = config.eval_batch_size,
                     image = low_res_images,
                     generator = torch.Generator(device=self.device),
-                    num_images_per_cond = config.num_images_per_cond,
-                    num_inference_steps = config.num_inference_timesteps,
+                    num_images_per_condition = config.num_images_per_cond,
+                    num_inference_steps = config.num_eval_timesteps,
                     output_type = 'np.array'
                 ).images
                 samples = torch.from_numpy(samples)
@@ -275,7 +272,7 @@ class DDIMTrainer():
                     ax[0].set_title(f'Single Sample Prediction 1')
                     ax[1].imshow(sample_preds[1,0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[1].set_title(f'Single Sample Prediction 2')
-                    ax[2].imshow(low_res_images[0,0,0,:,:].cpu().numpy(), cmap='inferno')
+                    ax[2].imshow(low_res_images[0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[2].set_title(f'Low Res Input')
                     ax[3].imshow(high_res_images[0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[3].set_title(f'HR Ground Truth')
@@ -305,7 +302,7 @@ class DDIMTrainer():
             r2_score_samples = r2_score(torch.cat(all_preds_samples).view(-1), torch.cat(all_labels).view(-1))
             
             
-            if epoch == config.num_epochs - 1:
+            if epoch == config.num_train_epochs - 1:
                 print(f'Final evaluation done. MSE: {total_mse:.6f}, R²: {r2_score_val:.6f}, MAE: {total_mae:.6f}')
                 print(f'Final evaluation done. MSE Samples: {total_mse_samples:.6f}, R² Samples: {r2_score_samples:.6f}, MAE Samples: {total_mae_samples:.6f}')
                 
