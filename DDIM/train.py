@@ -295,17 +295,19 @@ class DDIMTrainer():
                 total_mae += calc_mae(preds.to('cpu'), high_res_images.to('cpu')).item()
                 total_mse_samples += calc_mse(sample_preds.to('cpu'), high_res_images.to('cpu')).item()
                 total_mae_samples += calc_mae(sample_preds.to('cpu'), high_res_images.to('cpu')).item()
-                all_preds.append(preds)
-                all_preds_samples.append(sample_preds)
-                all_labels.append(high_res_images)
+                all_preds.append(preds.view(-1))
+                all_preds_samples.append(sample_preds.view(-1))
+                all_labels.append(high_res_images.view(-1))
 
             total_mse /= len(test_dataloader)
             total_mae /= len(test_dataloader)
             total_mse_samples /= len(test_dataloader)
             total_mae_samples /= len(test_dataloader)
-            
-            r2_score_val = r2_score(torch.cat(all_preds).view(-1), torch.cat(all_labels).view(-1))
-            r2_score_samples = r2_score(torch.cat(all_preds_samples).view(-1), torch.cat(all_labels).view(-1))
+            all_preds = torch.cat(all_preds)
+            all_preds_samples = torch.cat(all_preds_samples)
+            all_labels = torch.cat(all_labels)
+            r2_score_val = r2_score(all_preds.to('cpu'), all_labels.to('cpu')).item()
+            r2_score_samples = r2_score(all_preds_samples.to('cpu'), all_labels.to('cpu')).item()
             
             
             if epoch == config.num_train_epochs - 1:
