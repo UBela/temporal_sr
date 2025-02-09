@@ -239,7 +239,8 @@ class DDIMTrainer():
         eval_steps = 0
         total_mse_samples = 0.0
         total_mae_samples = 0.0
-
+        output_preds = []
+        output_preds_samples = []
         all_preds = []
         all_preds_samples = []
         all_labels = []
@@ -295,17 +296,23 @@ class DDIMTrainer():
                 total_mae += calc_mae(preds.to('cpu'), high_res_images.to('cpu')).item()
                 total_mse_samples += calc_mse(sample_preds.to('cpu'), high_res_images.to('cpu')).item()
                 total_mae_samples += calc_mae(sample_preds.to('cpu'), high_res_images.to('cpu')).item()
+                
+                
                 all_preds.append(preds.view(-1))
                 all_preds_samples.append(sample_preds.view(-1))
                 all_labels.append(high_res_images.view(-1))
+                output_preds.append(preds)
+                output_preds_samples.append(sample_preds)
 
             total_mse /= len(test_dataloader)
             total_mae /= len(test_dataloader)
             total_mse_samples /= len(test_dataloader)
             total_mae_samples /= len(test_dataloader)
+            
             all_preds = torch.cat(all_preds)
             all_preds_samples = torch.cat(all_preds_samples)
             all_labels = torch.cat(all_labels)
+            
             r2_score_val = r2_score(all_preds.to('cpu'), all_labels.to('cpu')).item()
             r2_score_samples = r2_score(all_preds_samples.to('cpu'), all_labels.to('cpu')).item()
             
@@ -319,8 +326,8 @@ class DDIMTrainer():
                 print(f'Epoch {epoch} - MSE Samples: {total_mse_samples}, MAE Samples: {total_mae_samples}, R2 Samples: {r2_score_samples}')
                 
             if not config.pretraining:
-                preds_tensor = torch.stack(all_preds)
-                preds_samples_tensor = torch.stack(all_preds_samples)
+                preds_tensor = torch.stack(output_preds)
+                preds_samples_tensor = torch.stack(output_preds_samples)
                 torch.save(preds_tensor, f'{config.preds_dir}/preds_DDIM_{test_year}_{config.scaling_factor}.pt')
                 torch.save(preds_samples_tensor, f'{config.preds_dir}/preds_samples_DDIM_{test_year}_{config.scaling_factor}.pt')
                 
