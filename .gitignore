@@ -12,9 +12,11 @@ __pycache__/
 # Logfiles
 *.out
 *.err
+# model files
 *.0
-.json
-
+*.json
+*.safetensors
+*.yaml
 # Distribution / packaging
 
 .Python
