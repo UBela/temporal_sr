@@ -1,3 +1,4 @@
+
 import sys
 sys.path.insert(0, '.')
 sys.path.insert(1, '..')
@@ -198,6 +199,7 @@ class DDIMTrainer():
 
                 progress_bar.update(1)
                 logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
+                print(f"Loss: {loss.detach().item()}, LR: {lr_scheduler.get_last_lr()[0]}, Step: {global_step}")
                 progress_bar.set_postfix(**logs)
                 accelerator.log(logs, step=global_step)
                 global_step += 1
@@ -215,6 +217,7 @@ class DDIMTrainer():
                     self.eval_mses_samples.append(mse_samples)
                     self.eval_maes_samples.append(mae_samples)
                     self.eval_r2s_samples.append(r2_samples)
+                
                 if (epoch + 1) % config.save_model_epochs == 0 or epoch == config.num_train_epochs - 1:
                     if config.push_to_hub:
                         upload_folder(
@@ -225,8 +228,11 @@ class DDIMTrainer():
                         )
                     else:
                         pipeline.save_pretrained(config.model_path)
-                        
-                        
+                
+                if epoch == config.num_train_epochs - 1:
+                    print(f"Training done. Final MSE: {mse}, R²: {r2}, MAE: {mae}")
+                else:
+                    print(f"Epoch {epoch} - MSE: {mse}, R²: {r2}, MAE: {mae}")                       
     def evaluate(self, epoch, pipeline, test_year):
         total_mse = 0.0
         total_mae = 0.0
