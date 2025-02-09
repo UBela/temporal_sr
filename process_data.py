@@ -45,8 +45,8 @@ def load_dataset(data, start, end, patch_size, random_years=None):
 def save_means_stds(config_path, dataset, feature_names):
     feature_tensors = []
     for i in range(len(dataset)):
-        lr_patches, _ = dataset[i]  
-        feature_tensors.append(lr_patches)
+        lr_patches, hr_patches = dataset[i]  
+        feature_tensors.append(hr_patches)
     
     features = torch.stack(feature_tensors, dim=0)
     means = features.view(features.shape[1], -1).mean(dim=1)  
@@ -147,13 +147,15 @@ class SuperresDatasetDDIM(Dataset):
         )
         
         lr_patches_seq = []
-        
+       
         for i in range(self.seq_len_lr):
             
             curr_index = index - 1 + i
             
             curr_index = max(0, min(curr_index, len(self.hr_data['valid_time'].values) - 1))
             
+            
+        
             lr_patch = np.array(
                 [average_pooling(self.hr_data[var][curr_index, :, :].values, self.scale) for var in self.features]
             )
@@ -161,6 +163,8 @@ class SuperresDatasetDDIM(Dataset):
             
             if self.normalize:
                 lr_patch = self.transforms(lr_patch)
+                print("LR patch after normalization", lr_patch.mean())
+                
             
             lr_patches_seq.append(lr_patch)
         
@@ -176,6 +180,7 @@ class SuperresDatasetDDIM(Dataset):
 
         if self.normalize:
             hr_patches = self.transforms(hr_patches)
+            print("HR patch after normalization", hr_patches.mean())
 
         return lr_patches, hr_patches
 
@@ -236,13 +241,20 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     data_path = '../data/all_years_merged_era5.nc'
     train_start = '1980-01-01'
-    train_end = '1980-12-31'
+    train_end = '1982-12-31'
     patch_size = 32
     train_set = load_dataset(data_path, train_start, train_end, patch_size)
     train_set, scale = rescale_data(train_set)
     print(len(train_set['valid_time'].values))
-    train_dataset = SuperresDatasetDDIM(train_set)
+    train_dataset = SuperresDatasetDDIM(train_set, config, normalize=False)
     lr, hr = train_dataset[0]
+    print(lr.mean(), hr.mean())
+    save_means_stds("configs/DDIM_config.yaml", train_dataset, config.feature_list)
+    train_dataset = SuperresDatasetDDIM(train_set, config)
+    lr, hr = train_dataset[0]
+    
+    # print mean for each variable
+    print(lr[0].mean(), hr[0].mean())
     print(lr.shape, hr.shape)
     
     plt.show()

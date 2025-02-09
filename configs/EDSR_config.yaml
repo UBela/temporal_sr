@@ -1,6 +1,7 @@
 TrainingConfig:
   config_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/configs/EDSR_config.yaml
   data_path: /mnt/qb/work/ludwig/lqb122/data/all_years_merged_era5.nc
+  edsr: true
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -10,14 +11,13 @@ TrainingConfig:
   - d2m
   - msl
   - tp
-  edsr: True
   in_channels: 3
   mean_d2m: 0.4396512806415558
   mean_msl: 0.4387790262699127
-  mean_t2m: 0.5267226696014404
+  mean_t2m: 0.5233513116836548
   mean_tp: 0.4729074537754059
-  mean_u10: 0.5303620100021362
-  mean_v10: 0.5200436115264893
+  mean_u10: 0.47016313672065735
+  mean_v10: 0.5480124950408936
   model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/EDSR/models/models_20_23
   num_train_epochs: 100
   out_channels: 3
@@ -32,10 +32,10 @@ TrainingConfig:
   scaling_factor: 4
   std_d2m: 0.2310042679309845
   std_msl: 0.23173673450946808
-  std_t2m: 0.09388130903244019
+  std_t2m: 0.10645971447229385
   std_tp: 0.24947123229503632
-  std_u10: 0.08889695256948471
-  std_v10: 0.0888783186674118
+  std_u10: 0.09219594299793243
+  std_v10: 0.1269245743751526
   test_year_pretraining: 2023
   test_years_end: 2019
   test_years_start: 1980

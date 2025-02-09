@@ -16,12 +16,12 @@ TrainingConfig:
   in_channels: 12
   learning_rate: 0.0001
   lr_warmup_steps: 50
-  mean_d2m: 0.6507610082626343
-  mean_msl: 0.6999652981758118
-  mean_t2m: 0.6681174039840698
-  mean_tp: 0.6827917098999023
-  mean_u10: 0.6392185091972351
-  mean_v10: 0.6944887638092041
+  mean_d2m: 0.5075131058692932
+  mean_msl: 0.5703748464584351
+  mean_t2m: 0.4832382798194885
+  mean_tp: 0.5661574006080627
+  mean_u10: 0.47303104400634766
+  mean_v10: 0.4797371029853821
   mixed_precision: fp16
   model_path: /mnt/qb/work/ludwig/lqb122/temporal_sr/DDIM/models/models_80_83
   num_eval_timesteps: 50
@@ -44,12 +44,12 @@ TrainingConfig:
   scaling_factor: 4
   seed: 0
   sequence_length: 3
-  std_d2m: 0.12587487697601318
-  std_msl: 0.12869346141815186
-  std_t2m: 0.12143349647521973
-  std_tp: 0.11483481526374817
-  std_u10: 0.12873104214668274
-  std_v10: 0.12781023979187012
+  std_d2m: 0.11949099600315094
+  std_msl: 0.1007150411605835
+  std_t2m: 0.12425408512353897
+  std_tp: 0.14186809957027435
+  std_u10: 0.11790993809700012
+  std_v10: 0.12059098482131958
   test_year_pretraining: 1983
   test_years_end: 2023
   test_years_start: 1984
