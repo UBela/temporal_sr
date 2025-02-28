@@ -65,7 +65,7 @@ else:
     
         eval_start_time = time.time()
 
-        tester.evaluate(epoch=0, pipeline=pretrained_pipeline, test_year=year)
+        tester.evaluate(epoch=0, pipeline=pretrained_pipeline, test_year=year, device=device)
 
         eval_end_time = time.time()
         print(f"Evaluation time: {eval_end_time - eval_start_time} seconds")

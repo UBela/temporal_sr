@@ -87,7 +87,7 @@ class DDIMTrainer():
         angular_speeds = 2 * np.pi * frequencies
         embedding = torch.cat([torch.sin(angular_speeds * noise), torch.cos(angular_speeds * noise)], dim=-1)
         return embedding
-
+    
     def plot_metrics(self):
         epochs = range(len(self.train_losses))
 
@@ -135,13 +135,10 @@ class DDIMTrainer():
             project_dir=os.path.join(config.output_dir, "logs"),
         )
         if accelerator.is_main_process:
-            if config.output_dir is not None:
+            if config.output_dir is not None and not os.path.exists(config.output_dir):
                 os.makedirs(config.output_dir, exist_ok=True)
-            if config.push_to_hub:
-                repo_id = create_repo(
-                    repo_id=config.hub_model_id or Path(config.output_dir).name, exist_ok=True
-                ).repo_id
-            accelerator.init_trackers("train_example")
+            if config.model_path is not None and not os.path.exists(config.model_path):
+                os.makedirs(config.model_path, exist_ok=True)
 
         train_dataloader = self.get_train_dataloader()
         # Prepare everything
@@ -160,9 +157,10 @@ class DDIMTrainer():
             self.model.train()
             epoch_loss = AverageMeter()
             for step, batch in enumerate(train_dataloader):
-                low_res_images, clean_images = batch
-                low_res_images, clean_images = low_res_images.to(self.device), clean_images.to(self.device)
+                low_res_images, clean_images = batch[0].to(self.device), batch[1].to(self.device)
                 
+                #clean_images = clean_images[:,int(config.sequence_length):int(2 * config.sequence_length),:,:]
+
                 noise = torch.randn(clean_images.shape, device=clean_images.device)
                 bs = clean_images.shape[0]
 
@@ -183,7 +181,7 @@ class DDIMTrainer():
                     # add low res images as condition
                     #low res images are of shape (bs, seq_len * num_features, 32, 32)
                     # noisy images are of shape (bs, num_features, 32, 32)
-                    
+                   
                     noisy_images = torch.cat([noisy_images, low_res_images], dim=1)
                     # Predict the noise residual
                     noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
@@ -191,15 +189,15 @@ class DDIMTrainer():
                     epoch_loss.update(loss.item(), bs)
                     accelerator.backward(loss)
 
-                    if accelerator.sync_gradients:
-                        accelerator.clip_grad_norm_(model.parameters(), 1.0)
+                    
+                    accelerator.clip_grad_norm_(model.parameters(), 1.0)
                     optimizer.step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
 
                 progress_bar.update(1)
                 logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "step": global_step}
-                print(f"Loss: {loss.detach().item()}, LR: {lr_scheduler.get_last_lr()[0]}, Step: {global_step}")
+                print(f"Epoch: {epoch}, Loss: {loss.detach().item()}, LR: {lr_scheduler.get_last_lr()[0]}")
                 progress_bar.set_postfix(**logs)
                 accelerator.log(logs, step=global_step)
                 global_step += 1
@@ -210,7 +208,7 @@ class DDIMTrainer():
                 pipeline = CondDDIMPipeline(unet=accelerator.unwrap_model(model), scheduler=self.noise_scheduler)
 
                 if (epoch + 1) % config.save_image_epochs == 0 or epoch == config.num_train_epochs - 1:
-                    mse, mae, r2, mse_samples, mae_samples, r2_samples = self.evaluate(epoch, pipeline, config.test_year_pretraining)
+                    mse, mae, r2, mse_samples, mae_samples, r2_samples = self.evaluate(epoch, pipeline, config.test_year_pretraining, device)
                     self.eval_mses.append(mse)
                     self.eval_maes.append(mae)
                     self.eval_r2s.append(r2)
@@ -219,21 +217,12 @@ class DDIMTrainer():
                     self.eval_r2s_samples.append(r2_samples)
                 
                 if (epoch + 1) % config.save_model_epochs == 0 or epoch == config.num_train_epochs - 1:
-                    if config.push_to_hub:
-                        upload_folder(
-                            repo_id=repo_id,
-                            folder_path=config.output_dir,
-                            commit_message=f"Epoch {epoch}",
-                            ignore_patterns=["step_*", "epoch_*"],
-                        )
-                    else:
-                        pipeline.save_pretrained(config.model_path)
-                
-                if epoch == config.num_train_epochs - 1:
-                    print(f"Training done. Final MSE: {mse}, R²: {r2}, MAE: {mae}")
-                else:
-                    print(f"Epoch {epoch} - MSE: {mse}, R²: {r2}, MAE: {mae}")                       
-    def evaluate(self, epoch, pipeline, test_year):
+                    print(f"Saving model at epoch {epoch}")
+                    pipeline.save_pretrained(config.model_path)
+                    
+ 
+    def evaluate(self, epoch, pipeline,test_year, device): 
+        eval_steps = 0
         total_mse = 0.0
         total_mae = 0.0
         eval_steps = 0
@@ -244,63 +233,88 @@ class DDIMTrainer():
         all_preds = []
         all_preds_samples = []
         all_labels = []
-        
         test_dataloader = self.get_eval_dataloader()
-        with torch.no_grad():
-            for low_res_images, high_res_images in test_dataloader:
-                
-                low_res_images, high_res_images = low_res_images.to(self.device), high_res_images.to(self.device)
-                
+
+        with torch.no_grad(): 
+            for batch in test_dataloader: 
+
+                lr_patches = batch[0].to(device)  
+
+                #from hr only grab the middle timestep, ie features 3, 4, and 5
+                #hr_patches = batch[1][:,int(config.sequence_length):int(config.sequence_length * 2),:,:].to(device)
+                hr_patches = batch[1].to(device)    
+
+
+                # prediction
                 samples = pipeline(
-                    batch_size = config.eval_batch_size,
-                    image = low_res_images,
-                    generator = torch.Generator(device=self.device),
-                    num_images_per_condition = config.num_images_per_cond,
-                    num_inference_steps = config.num_eval_timesteps,
-                    output_type = 'np.array'
+                    batch_size=config.eval_batch_size,
+                    image=lr_patches,
+                    generator=torch.Generator(device=device),
+                    num_images_per_cond=config.num_images_per_cond,
+                    num_inference_steps=config.num_eval_timesteps,
+                    output_type="np.array"
                 ).images
+
+                eval_steps += 1      
+                if eval_steps % 10 == 0:
+                    print(f"Completed {eval_steps} evaluation steps.")
+
+                # reshape output samples --> shape (num_images_per_cond, batch_size, out_channels, H, W) 
                 samples = torch.from_numpy(samples)
+                bs = int(samples.shape[0]/config.num_images_per_cond)
+                sample_preds = samples.view(config.num_images_per_cond, bs, config.out_channels, config.patch_size, config.patch_size)
+
+                # loss computation
+                lr_patches = lr_patches.view(-1, config.sequence_length, config.out_channels, config.patch_size, config.patch_size)
+                lr_patches = lr_patches[:, int((config.sequence_length - 1) / 2), :, :,:].to(device)
+                preds = sample_preds.mean(dim=0).to(device)
+
+                loss = F.mse_loss(preds, hr_patches).to(device)
+                print("Evaluation loss: {}".format(loss.item()))
                 
-                eval_steps += 1
-                
-                
-                batch_size = int(samples.shape[0] / config.num_images_per_cond)
-                sample_preds = samples.view(config.num_images_per_cond,
-                                            batch_size,
-                                            config.out_channels,
-                                            config.patch_size,
-                                            config.patch_size)
-                
-                preds = sample_preds.mean(dim=0)
-                
+                # plot samples
                 if eval_steps <= 1:
+                    
                     fig, ax = plt.subplots(1, 5, figsize=(25, 5))
                     ax[0].imshow(sample_preds[0,0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[0].set_title(f'Single Sample Prediction 1')
                     ax[1].imshow(sample_preds[1,0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[1].set_title(f'Single Sample Prediction 2')
-                    ax[2].imshow(low_res_images[0,0,:,:].cpu().numpy(), cmap='inferno')
+                    ax[2].imshow(lr_patches[0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[2].set_title(f'Low Res Input')
-                    ax[3].imshow(high_res_images[0,0,:,:].cpu().numpy(), cmap='inferno')
+                    ax[3].imshow(hr_patches[0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[3].set_title(f'HR Ground Truth')
                     ax[4].imshow(preds[0,0,:,:].cpu().numpy(), cmap='inferno')
                     ax[4].set_title(f'Average Prediction')
                     plt.savefig(f'{config.output_dir}/output_epoch{epoch}.png')
                     plt.close()
-                    
+                    for i in range(3):
+                        print("Variable: {}".format(i))
+                        print("HR max value: {}".format(hr_patches[:,i,:,:].max()))
+                        print("HR min value: {}".format(hr_patches[:,i,:,:].min()))
+                        print("HR mean value: {}".format(hr_patches[:,i,:,:].mean()))
+
+                        print("Preds max value: {}".format(preds[:,i,:,:].max()))
+                        print("Preds min value: {}".format(preds[:,i,:,:].min()))
+                        print("Preds mean value: {}".format(preds[:,i,:,:].mean()))
+
+                        print("LR max value: {}".format(lr_patches[:,i,:,:].max()))
+                        print("LR min value: {}".format(lr_patches[:,i,:,:].min()))
+                        print("LR mean value: {}".format(lr_patches[:,i,:,:].mean()))
+                
+                # collect preds
                 preds = denormalize(preds, means)
                 sample_preds = denormalize(sample_preds[0,:,:,:,:], means)
-                high_res_images = denormalize(high_res_images, means)
-                
-                total_mse += calc_mse(preds.to('cpu'), high_res_images.to('cpu')).item()
-                total_mae += calc_mae(preds.to('cpu'), high_res_images.to('cpu')).item()
-                total_mse_samples += calc_mse(sample_preds.to('cpu'), high_res_images.to('cpu')).item()
-                total_mae_samples += calc_mae(sample_preds.to('cpu'), high_res_images.to('cpu')).item()
+                hr_patches = denormalize(hr_patches, means)
+                total_mse += calc_mse(preds.to('cpu'), hr_patches.to('cpu')).item()
+                total_mae += calc_mae(preds.to('cpu'), hr_patches.to('cpu')).item()
+                total_mse_samples += calc_mse(sample_preds.to('cpu'), hr_patches.to('cpu')).item()
+                total_mae_samples += calc_mae(sample_preds.to('cpu'), hr_patches.to('cpu')).item()
                 
                 
                 all_preds.append(preds.view(-1))
                 all_preds_samples.append(sample_preds.view(-1))
-                all_labels.append(high_res_images.view(-1))
+                all_labels.append(hr_patches.view(-1))
                 output_preds.append(preds)
                 output_preds_samples.append(sample_preds)
 
@@ -315,15 +329,11 @@ class DDIMTrainer():
             
             r2_score_val = r2_score(all_preds.to('cpu'), all_labels.to('cpu')).item()
             r2_score_samples = r2_score(all_preds_samples.to('cpu'), all_labels.to('cpu')).item()
-            
-            
             if epoch == config.num_train_epochs - 1:
-                print(f'Final evaluation done. MSE: {total_mse:.6f}, R²: {r2_score_val:.6f}, MAE: {total_mae:.6f}')
-                print(f'Final evaluation done. MSE Samples: {total_mse_samples:.6f}, R² Samples: {r2_score_samples:.6f}, MAE Samples: {total_mae_samples:.6f}')
-                
-            else:
-                print(f'Epoch {epoch} - MSE: {total_mse}, MAE: {total_mae}, R2: {r2_score_val}')
-                print(f'Epoch {epoch} - MSE Samples: {total_mse_samples}, MAE Samples: {total_mae_samples}, R2 Samples: {r2_score_samples}')
+                print("Final Evaluation")
+            
+            print(f'Epoch {epoch} - MSE: {total_mse}, MAE: {total_mae}, R2: {r2_score_val}')
+            print(f'Epoch {epoch} - MSE Samples: {total_mse_samples}, MAE Samples: {total_mae_samples}, R2 Samples: {r2_score_samples}')
                 
             if not config.pretraining:
                 preds_tensor = torch.stack(output_preds)
@@ -333,7 +343,3 @@ class DDIMTrainer():
                 
                 
         return total_mse, total_mae, r2_score_val, total_mse_samples, total_mae_samples, r2_score_samples
-                
-                
-                
-            

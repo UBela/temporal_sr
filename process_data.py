@@ -44,8 +44,10 @@ def load_dataset(data, start, end, patch_size, random_years=None):
 
 def save_means_stds(config_path, dataset, feature_names):
     feature_tensors = []
+    print("dataset length", len(dataset))
     for i in range(len(dataset)):
-        lr_patches, hr_patches = dataset[i]  
+        
+        lr_patches, hr_patches = dataset[i] 
         feature_tensors.append(hr_patches)
     
     features = torch.stack(feature_tensors, dim=0)
@@ -65,7 +67,8 @@ def save_means_stds(config_path, dataset, feature_names):
     with open(config_path, 'w') as file:
         yaml.dump(config, file)
 
-
+def downsampling(xarray, factor):
+    return xarray.isel(latitude=slice(0, None, factor), longitude=slice(0, None, factor))
 def get_random_years(config_path):
     random_years = list(map(int, np.random.choice(np.arange(1980, 2014), size=3, replace=False)))
     with open(config_path, 'r') as file:
@@ -115,9 +118,10 @@ class SuperresDataset(Dataset):
     
     
     
-class SuperresDatasetDDIM(Dataset):
+class SuperresDatasetDDIM2(Dataset):
     """
-    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and 1 HR patch at timestep t. 
+    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and HR patches. 
+    Where the HR patch at timestep t is used as the target for prediction
     The LR patches are preamtively upsampled to the HR patch size using bilinear interpolation.
     
 
@@ -135,52 +139,96 @@ class SuperresDatasetDDIM(Dataset):
             transforms.Normalize(mean=self.means, std=[1.0]*len(self.means))
         ])
         self.seq_len_lr = config.sequence_length
-        
+        self.lr_data = downsampling(self.hr_data, self.scale)
+    
+
+    
+    def __len__(self):
+        # the last index has no t+1
+        return len(self.hr_data['valid_time'].values) - self.seq_len_lr + 1
+    
+    def __getitem__(self, idx): 
+        hr_patches = []
+        lr_patches = []
+
+        for i in range(self.seq_len_lr):
+            hr_patch = torch.stack([torch.from_numpy(self.hr_data[feature][idx + i, :, :].values) for feature in self.features])
+            lr_patch = torch.stack([torch.from_numpy(self.lr_data[feature][idx + i, :, :].values) for feature in self.features])
+            
+            if self.normalize:
+                hr_patch = self.transforms(hr_patch)
+                lr_patch = self.transforms(lr_patch)
+            
+            
+            hr_patch = hr_patch.to(dtype=torch.float32)
+            lr_patch = lr_patch.to(dtype=torch.float32)
+
+            hr_patches.append(hr_patch)
+            lr_patches.append(lr_patch)
+
+        hr_patches = torch.cat(hr_patches, dim=0)
+        lr_patches = torch.cat(lr_patches, dim=0)
+
+        lr_patches = F.interpolate(lr_patches.unsqueeze(0), 
+                                    size=(hr_patches.shape[1], 
+                                    hr_patches.shape[2]), 
+                                    mode='bilinear', 
+                                    align_corners=False).squeeze(0)
+
+        return lr_patches, hr_patches
+    
+class SuperresDatasetDDIM(Dataset):
+    """
+    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and HR patches. 
+    Where the HR patch at timestep t is used as the target for prediction
+    The LR patches are preamtively upsampled to the HR patch size using bilinear interpolation.
+    
+
+    Args:
+        Dataset (_type_): _description_
+    """
+    def __init__(self, dataset, config, normalize = True, seq_len_lr=3):
+        super().__init__()
+        self.hr_data = dataset
+        self.scale = config.scaling_factor
+        self.features = config.feature_list[:3]
+        self.normalize = normalize
+        self.means = [config.mean_u10, config.mean_v10, config.mean_t2m]
+        self.transforms = transforms.Compose([
+            transforms.Normalize(mean=self.means, std=[1.0]*len(self.means))
+        ])
+        self.seq_len_lr = config.sequence_length
+        self.lr_data = average_pooling_xr(self.hr_data, self.scale)
+       
+        print(f"Dataset time steps: {len(self.hr_data['valid_time'].values)}")
+
     
     def __len__(self):
         return len(self.hr_data['valid_time'].values)
     
-    def __getitem__(self, index):
-        hr_patches = torch.stack(
-            [torch.tensor(self.hr_data[var][index, :, :].values, dtype=torch.float32) for var in self.features], 
-            dim=0
-        )
-        
-        lr_patches_seq = []
-       
+    def __getitem__(self, idx): 
+        hr_patches = torch.stack([torch.tensor(self.hr_data[feature][idx, :, :].values, dtype=torch.float32) for feature in self.features])
+        lr_patches = []
         for i in range(self.seq_len_lr):
             
-            curr_index = index - 1 + i
-            
+            curr_index = idx - 1 + i
             curr_index = max(0, min(curr_index, len(self.hr_data['valid_time'].values) - 1))
+            lr_patch = torch.tensor(
+                [self.lr_data[feature][curr_index, :, :].values for feature in self.features], 
+                dtype=torch.float32)
             
+            if self.normalize: lr_patch = self.transforms(lr_patch)
+            lr_patches.append(lr_patch)
             
-        
-            lr_patch = np.array(
-                [average_pooling(self.hr_data[var][curr_index, :, :].values, self.scale) for var in self.features]
-            )
-            lr_patch = torch.tensor(lr_patch, dtype=torch.float32)  
-            
-            if self.normalize:
-                lr_patch = self.transforms(lr_patch)
-                print("LR patch after normalization", lr_patch.mean())
-                
-            
-            lr_patches_seq.append(lr_patch)
-        
-        lr_patches = torch.cat(lr_patches_seq, dim=0)
+        lr_patches = torch.cat(lr_patches, dim=0)
 
-        # Upscale LR patches to match HR patch spatial size
-        lr_patches = F.interpolate(
-            lr_patches.unsqueeze(0), 
-            size=(hr_patches.shape[1], hr_patches.shape[2]), 
-            mode='bilinear', 
-            align_corners=False
-        ).squeeze(0)
-
-        if self.normalize:
-            hr_patches = self.transforms(hr_patches)
-            print("HR patch after normalization", hr_patches.mean())
+        lr_patches = F.interpolate(lr_patches.unsqueeze(0), 
+                                    size=(hr_patches.shape[1], 
+                                    hr_patches.shape[2]), 
+                                    mode='bilinear', 
+                                    align_corners=False).squeeze(0)
+        
+        if self.normalize: hr_patches = self.transforms(hr_patches)
 
         return lr_patches, hr_patches
 
@@ -208,17 +256,22 @@ def initialize_dataset(config, test_year):
     
     start = min(train_start, test_start).strftime('%Y-%m-%d')
     end = max(train_end, test_end).strftime('%Y-%m-%d')
-    
+    print(f"Start: {start}, End: {end}")
+    print(f"train start: {train_start}, train end: {train_end}")
+    print(f"test start: {test_start}, test end: {test_end}")
     data = load_dataset(config.data_path, start, end, config.patch_size, random_years)
     if config.use_random_years:
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
-        train_data = data.sel(valid_time=slice(config.train_start_date, config.train_start_date))
-   
+        train_data = data.sel(valid_time=slice(config.train_start_date, config.train_end_date))
+    print("Train start and end", config.train_start_date, config.train_end_date)
     data = data.sortby('valid_time')
     
     test_data = data.sel(valid_time=slice(test_start, test_end))
+    print(f"Length of train data: {len(train_data['valid_time'].values)}")
     train_data, train_scale = rescale_data(train_data)
+    # get info on test data
+    print(f"Length of test data: {len(test_data['valid_time'].values)}")
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
     if config.edsr:
@@ -232,6 +285,8 @@ def initialize_dataset(config, test_year):
         save_means_stds(config.config_path, train_dataset, config.feature_list)
         train_dataset = SuperresDatasetDDIM(train_data, config)
         test_dataset = SuperresDatasetDDIM(test_data, config)
+        print(f"Length of train dataset: {len(train_dataset)}")
+        print(f"Length of test dataset: {len(test_dataset)}")
     return train_dataset, test_dataset
 
 
@@ -248,6 +303,7 @@ if __name__ == '__main__':
     print(len(train_set['valid_time'].values))
     train_dataset = SuperresDatasetDDIM(train_set, config, normalize=False)
     lr, hr = train_dataset[0]
+    print(lr.shape, hr.shape)
     print(lr.mean(), hr.mean())
     save_means_stds("configs/DDIM_config.yaml", train_dataset, config.feature_list)
     train_dataset = SuperresDatasetDDIM(train_set, config)

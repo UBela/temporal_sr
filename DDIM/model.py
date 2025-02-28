@@ -24,7 +24,7 @@ Lucas model had number of channels as (160, 320, 320, 640)
 def customize_model(config: Box):
     model = UNet2DModel(in_channels=config.in_channels,
                         out_channels=config.out_channels,
-                        block_out_channels=(64, 128, 256, 384),
+                        block_out_channels=(160, 320, 320, 640),
                         down_block_types=("DownBlock2D", "DownBlock2D", "DownBlock2D", "AttnDownBlock2D"),
                         up_block_types=("AttnUpBlock2D", "UpBlock2D", "UpBlock2D", "UpBlock2D"),
                         attention_head_dim=32,

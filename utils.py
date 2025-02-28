@@ -15,7 +15,10 @@ def kelvin_to_celsius(data):
 
 def rescale_data(data, custom_scale = None):
     returned_scale = {}
+    print("Dataset variables before rescaling:", list(data.keys()))
+
     for var in data:
+        print(f"Rescaling {var}")
         
         if custom_scale and var in custom_scale:
             min_val = custom_scale[var]['min']
@@ -28,6 +31,7 @@ def rescale_data(data, custom_scale = None):
             
             
         # Rescale to the target range [0, 1]
+        print(f"data shape: {data[var].shape}, min shape: {min_val.shape}, max shape: {max_val.shape}")
         data[var] = (data[var] - min_val) / (max_val - min_val)  
         
         
@@ -61,6 +65,9 @@ def average_pooling(data, scale, to_int=False):
     if to_int:
         data = np.uint8(data)
     return data
+def average_pooling_xr(hr_data, scale):
+    return hr_data.coarsen(latitude=scale, longitude=scale, boundary='trim').mean()
+
     
 def calc_mse(pred, label):
     return torch.mean((pred - label) ** 2)
