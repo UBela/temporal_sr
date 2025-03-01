@@ -15,7 +15,6 @@ def kelvin_to_celsius(data):
 
 def rescale_data(data, custom_scale = None):
     returned_scale = {}
-    print("Dataset variables before rescaling:", list(data.keys()))
 
     for var in data:
         print(f"Rescaling {var}")
@@ -28,10 +27,8 @@ def rescale_data(data, custom_scale = None):
             max_val = data[var].values.max()
             
             returned_scale[var] = {'min': min_val, 'max': max_val}
-            
-            
+        
         # Rescale to the target range [0, 1]
-        print(f"data shape: {data[var].shape}, min shape: {min_val.shape}, max shape: {max_val.shape}")
         data[var] = (data[var] - min_val) / (max_val - min_val)  
         
         

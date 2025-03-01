@@ -213,10 +213,10 @@ class SuperresDatasetDDIM(Dataset):
             
             curr_index = idx - 1 + i
             curr_index = max(0, min(curr_index, len(self.hr_data['valid_time'].values) - 1))
-            lr_patch = torch.tensor(
-                [self.lr_data[feature][curr_index, :, :].values for feature in self.features], 
-                dtype=torch.float32)
-            
+            # turn lr_data into a numpy array first to speed up
+            lr_patch = torch.tensor(np.array([self.lr_data[feature][curr_index, :, :].values for feature in self.features]), 
+                                    dtype=torch.float32)
+
             if self.normalize: lr_patch = self.transforms(lr_patch)
             lr_patches.append(lr_patch)
             
@@ -249,14 +249,10 @@ def initialize_dataset(config, test_year):
         print(f"Random years: {random_years}")
     
     # in case train date is after test date, pass the oldest date as start and newest as end
-    train_start = datetime.strptime(config.train_start_date, '%Y-%m-%d')
-    train_end = datetime.strptime(config.train_end_date, '%Y-%m-%d')
-    test_start = datetime.strptime(test_start, '%Y-%m-%d')
-    test_end = datetime.strptime(test_end, '%Y-%m-%d')
-    
-    start = min(train_start, test_start).strftime('%Y-%m-%d')
-    end = max(train_end, test_end).strftime('%Y-%m-%d')
-    print(f"Start: {start}, End: {end}")
+    train_start = config.train_start_date
+    train_end = config.train_end_date
+    start = min(train_start, test_start)
+    end = max(train_end, test_end)
     print(f"train start: {train_start}, train end: {train_end}")
     print(f"test start: {test_start}, test end: {test_end}")
     data = load_dataset(config.data_path, start, end, config.patch_size, random_years)
@@ -264,7 +260,6 @@ def initialize_dataset(config, test_year):
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
     else:
         train_data = data.sel(valid_time=slice(config.train_start_date, config.train_end_date))
-    print("Train start and end", config.train_start_date, config.train_end_date)
     data = data.sortby('valid_time')
     
     test_data = data.sel(valid_time=slice(test_start, test_end))
@@ -272,6 +267,10 @@ def initialize_dataset(config, test_year):
     train_data, train_scale = rescale_data(train_data)
     # get info on test data
     print(f"Length of test data: {len(test_data['valid_time'].values)}")
+    print(f"Fist date in test data is {test_data['valid_time'].values[0]}")
+    print(f"Last date in test data is {test_data['valid_time'].values[-1]}")
+    print(f"First date in train data is {train_data['valid_time'].values[0]}")
+    print(f"Last date in train data is {train_data['valid_time'].values[-1]}")
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
     if config.edsr:
