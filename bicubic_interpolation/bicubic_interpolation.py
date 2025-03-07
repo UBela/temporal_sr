@@ -83,7 +83,7 @@ def main(config, test_year):
     mse /= test_tensor.shape[0]
     mae /= test_tensor.shape[0]
     r2 = r2_score(torch.cat(sr_images), torch.cat(hr_images))
-    torch.save(torch.stack(output), f'{config.output_dir}/baseline_atlantic_{test_year}_{config.scaling_factor}x.pt')
+    torch.save(torch.stack(output), f'{config.output_dir}/baseline_{test_year}_{config.scaling_factor}x.pt')
     print(f'MSE: {mse:.6f}, MAE: {mae:.6f}, R²: {r2:.6f}')
 
 

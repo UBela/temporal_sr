@@ -1,6 +1,6 @@
 TrainingConfig:
   config_path: /home/bela/thesis/temporal_sr/local_config.yaml
-  data_path: /home/bela/thesis/data/merge_atlantic_data.nc
+  data_path: /home/bela/thesis/data/era5_3h_merged.nc
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -20,10 +20,10 @@ TrainingConfig:
   model_path: /home/bela/thesis/temporal_sr/EDSR/model
   num_train_epochs: 10
   out_channels: 3
-  output_dir: /home/bela/thesis/preds
+  output_dir: /home/bela/thesis/preds_DDIM_3h
   patch_size: 32
   preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
-  scaling_factor: 8
+  scaling_factor: 4
   test_end_date: '1989-12-31'
   test_start_date: '1989-01-01'
   train_batch_size: 16
