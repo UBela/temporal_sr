@@ -1,2 +1,3 @@
 # temporal_sr
-Master thesis on temporal generalizability of SR methods
+Master thesis on temporal generalizability of SR methods in climate downscaling
+
