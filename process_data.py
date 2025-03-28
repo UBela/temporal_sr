@@ -116,67 +116,6 @@ class SuperresDataset(Dataset):
         
         return lr_patches, hr_patches
     
-    
-    
-class SuperresDatasetDDIM2(Dataset):
-    """
-    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and HR patches. 
-    Where the HR patch at timestep t is used as the target for prediction
-    The LR patches are preamtively upsampled to the HR patch size using bilinear interpolation.
-    
-
-    Args:
-        Dataset (_type_): _description_
-    """
-    def __init__(self, dataset, config, normalize = True, seq_len_lr=3):
-        super().__init__()
-        self.hr_data = dataset
-        self.scale = config.scaling_factor
-        self.features = config.feature_list[:3]
-        self.normalize = normalize
-        self.means = [config.mean_u10, config.mean_v10, config.mean_t2m]
-        self.transforms = transforms.Compose([
-            transforms.Normalize(mean=self.means, std=[1.0]*len(self.means))
-        ])
-        self.seq_len_lr = config.sequence_length
-        self.lr_data = downsampling(self.hr_data, self.scale)
-    
-
-    
-    def __len__(self):
-        # the last index has no t+1
-        return len(self.hr_data['valid_time'].values) - self.seq_len_lr + 1
-    
-    def __getitem__(self, idx): 
-        hr_patches = []
-        lr_patches = []
-
-        for i in range(self.seq_len_lr):
-            hr_patch = torch.stack([torch.from_numpy(self.hr_data[feature][idx + i, :, :].values) for feature in self.features])
-            lr_patch = torch.stack([torch.from_numpy(self.lr_data[feature][idx + i, :, :].values) for feature in self.features])
-            
-            if self.normalize:
-                hr_patch = self.transforms(hr_patch)
-                lr_patch = self.transforms(lr_patch)
-            
-            
-            hr_patch = hr_patch.to(dtype=torch.float32)
-            lr_patch = lr_patch.to(dtype=torch.float32)
-
-            hr_patches.append(hr_patch)
-            lr_patches.append(lr_patch)
-
-        hr_patches = torch.cat(hr_patches, dim=0)
-        lr_patches = torch.cat(lr_patches, dim=0)
-
-        lr_patches = F.interpolate(lr_patches.unsqueeze(0), 
-                                    size=(hr_patches.shape[1], 
-                                    hr_patches.shape[2]), 
-                                    mode='bilinear', 
-                                    align_corners=False).squeeze(0)
-
-        return lr_patches, hr_patches
-    
 class SuperresDatasetDDIM(Dataset):
     """
     Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and HR patches. 
@@ -253,8 +192,7 @@ def initialize_dataset(config, test_year):
     train_end = config.train_end_date
     start = min(train_start, test_start)
     end = max(train_end, test_end)
-    print(f"train start: {train_start}, train end: {train_end}")
-    print(f"test start: {test_start}, test end: {test_end}")
+   
     data = load_dataset(config.data_path, start, end, config.patch_size, random_years)
     if config.use_random_years:
         train_data = data.sel(valid_time=data['valid_time'].dt.year.isin(random_years))
@@ -263,14 +201,9 @@ def initialize_dataset(config, test_year):
     data = data.sortby('valid_time')
     
     test_data = data.sel(valid_time=slice(test_start, test_end))
-    print(f"Length of train data: {len(train_data['valid_time'].values)}")
     train_data, train_scale = rescale_data(train_data)
     # get info on test data
-    print(f"Length of test data: {len(test_data['valid_time'].values)}")
-    print(f"Fist date in test data is {test_data['valid_time'].values[0]}")
-    print(f"Last date in test data is {test_data['valid_time'].values[-1]}")
-    print(f"First date in train data is {train_data['valid_time'].values[0]}")
-    print(f"Last date in train data is {train_data['valid_time'].values[-1]}")
+   
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
     if config.edsr:
@@ -284,8 +217,7 @@ def initialize_dataset(config, test_year):
         save_means_stds(config.config_path, train_dataset, config.feature_list)
         train_dataset = SuperresDatasetDDIM(train_data, config)
         test_dataset = SuperresDatasetDDIM(test_data, config)
-        print(f"Length of train dataset: {len(train_dataset)}")
-        print(f"Length of test dataset: {len(test_dataset)}")
+        
     return train_dataset, test_dataset
 
 

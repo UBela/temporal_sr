@@ -21,17 +21,8 @@ parser = argparse.ArgumentParser(description='Run model training with configurat
 parser.add_argument('config_path', type=str, help='Path to the configuration yaml file.')
 args = parser.parse_args()
 
-# Load and box the configuration
 config = Box(load_config(args.config_path)['TrainingConfig'])
 
-def bicubic_interpolation(lr_patch, scaling_factor):
-    lr_patch = lr_patch.permute(1, 2, 0).numpy()
-    sr_patch = cv2.resize(lr_patch, 
-                        dsize=(lr_patch.shape[1] * scaling_factor, 
-                        lr_patch.shape[0] * scaling_factor), 
-                        interpolation=cv2.INTER_CUBIC)
-    sr_patch = torch.tensor(sr_patch).unsqueeze(2).permute(2, 0, 1)
-    return sr_patch
 def bicubic_interpolation(lr_patch, scaling_factor):
     if lr_patch.dim() == 3:
         lr_patch = lr_patch.unsqueeze(0) 
