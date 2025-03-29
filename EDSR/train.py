@@ -102,12 +102,6 @@ class CustomTrainer(Trainer):
         train_dataloader = self.initialize_dataloader()
         train_batch_size = args.train_batch_size
         step_size = int(len(train_dataset) / train_batch_size * 200)
-        n_gpu = args.n_gpu
-        
-        
-        if n_gpu  > 1:
-            self.model = nn.DataParallel(self.model)
-            
         optimizer = Adam(self.model.parameters(), lr=learning_rate)
         scheduler = lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=self.args.gamma)
         

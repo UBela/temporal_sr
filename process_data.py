@@ -47,7 +47,7 @@ def save_means_stds(config_path, dataset, feature_names):
     print("dataset length", len(dataset))
     for i in range(len(dataset)):
         
-        lr_patches, hr_patches = dataset[i] 
+        _, hr_patches = dataset[i] 
         feature_tensors.append(hr_patches)
     
     features = torch.stack(feature_tensors, dim=0)
@@ -69,6 +69,7 @@ def save_means_stds(config_path, dataset, feature_names):
 
 def downsampling(xarray, factor):
     return xarray.isel(latitude=slice(0, None, factor), longitude=slice(0, None, factor))
+
 def get_random_years(config_path):
     random_years = list(map(int, np.random.choice(np.arange(1980, 2014), size=3, replace=False)))
     with open(config_path, 'r') as file:
@@ -118,8 +119,7 @@ class SuperresDataset(Dataset):
     
 class SuperresDatasetDDIM(Dataset):
     """
-    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and HR patches. 
-    Where the HR patch at timestep t is used as the target for prediction
+    Create a dataset for super resolution using DDIM. Each item consists of 3 (t-1, t, t+1) LR patches and one HR patch at t. 
     The LR patches are preamtively upsampled to the HR patch size using bilinear interpolation.
     
 
@@ -202,7 +202,6 @@ def initialize_dataset(config, test_year):
     
     test_data = data.sel(valid_time=slice(test_start, test_end))
     train_data, train_scale = rescale_data(train_data)
-    # get info on test data
    
     test_data, _ = rescale_data(test_data, custom_scale=train_scale)    
     
@@ -219,30 +218,3 @@ def initialize_dataset(config, test_year):
         test_dataset = SuperresDatasetDDIM(test_data, config)
         
     return train_dataset, test_dataset
-
-
-
-# test the DDIM dataset
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    data_path = '../data/all_years_merged_era5.nc'
-    train_start = '1980-01-01'
-    train_end = '1982-12-31'
-    patch_size = 32
-    train_set = load_dataset(data_path, train_start, train_end, patch_size)
-    train_set, scale = rescale_data(train_set)
-    print(len(train_set['valid_time'].values))
-    train_dataset = SuperresDatasetDDIM(train_set, config, normalize=False)
-    lr, hr = train_dataset[0]
-    print(lr.shape, hr.shape)
-    print(lr.mean(), hr.mean())
-    save_means_stds("configs/DDIM_config.yaml", train_dataset, config.feature_list)
-    train_dataset = SuperresDatasetDDIM(train_set, config)
-    lr, hr = train_dataset[0]
-    
-    # print mean for each variable
-    print(lr[0].mean(), hr[0].mean())
-    print(lr.shape, hr.shape)
-    
-    plt.show()
-   

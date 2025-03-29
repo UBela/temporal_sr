@@ -1,6 +1,7 @@
 TrainingConfig:
-  config_path: /home/bela/thesis/temporal_sr/local_config.yaml
-  data_path: /home/bela/thesis/data/era5_3h_merged.nc
+  config_path: /home/bela/thesis/temporal_sr/configs/local_config.yaml
+  data_path: /home/bela/thesis/data/all_years_merged_era5.nc
+  edsr: true
   eval_batch_size: 1
   feature_channels: 64
   feature_list:
@@ -13,19 +14,32 @@ TrainingConfig:
   in_channels: 3
   mean_d2m: 271.56866455078125
   mean_msl: 100409.0234375
-  mean_t2m: 273.1571044921875
+  mean_t2m: 0.4832382798194885
   mean_tp: 0.00010626256698742509
-  mean_u10: 0.4288536608219147
-  mean_v10: 0.43577271699905396
-  model_path: /home/bela/thesis/temporal_sr/EDSR/model
-  num_train_epochs: 10
+  mean_u10: 0.47303104400634766
+  mean_v10: 0.4797371029853821
+  model_path: /home/bela/thesis/models/models
+  num_train_epochs: 100
   out_channels: 3
-  output_dir: /home/bela/thesis/preds_DDIM_3h
+  output_dir: /home/bela/thesis/outputs/output
   patch_size: 32
-  preds_dir: /home/bela/thesis/temporal_sr/EDSR/preds
+  preds_dir: /home/bela/thesis/outputs/preds
+  pretraining: true
+  random_years:
+  - 1980
+  - 1994
+  - 1993
   scaling_factor: 4
-  test_end_date: '1989-12-31'
-  test_start_date: '1989-01-01'
+  std_d2m: 0.2310042679309845
+  std_msl: 0.23173673450946808
+  std_t2m: 0.12425408512353897
+  std_tp: 0.24947123229503632
+  std_u10: 0.11790993809700012
+  std_v10: 0.12059098482131958
+  test_year_pretraining: 2023
+  test_years_end: 2019
+  test_years_start: 1980
   train_batch_size: 16
   train_end_date: '1982-12-31'
   train_start_date: '1980-01-01'
+  use_random_years: false
